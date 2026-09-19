@@ -99,12 +99,16 @@
     <div>
       <section class="panel">
         <div class="panel-head"><h2 id="net-name">Схема</h2><span style="font-family:var(--font-mono);font-size:11.5px;color:var(--muted)" id="net-size"></span></div>
-        <svg class="net" id="svg" viewBox="0 0 720 440" role="img" aria-label="Схема сети офиса"></svg>
+        <svg class="net" id="svg" viewBox="0 0 760 500" role="img" aria-label="Схема сети офиса"></svg>
         <div class="legend">
           <span><i class="sw" style="color:var(--accent)"></i> сетевое оборудование</span>
           <span><i class="sw" style="color:var(--warn)"></i> рабочие места и периферия</span>
           <span><i class="sw" style="color:var(--bad)"></i> внешняя зона</span>
           <span><i class="sw" style="color:var(--pick)"></i> выбрано тобой</span>
+          <span style="width:100%;height:0"></span>
+          <span><svg width="26" height="8" aria-hidden="true"><line x1="0" y1="4" x2="26" y2="4" stroke="var(--line)" stroke-width="2"></line></svg> обычная связь</span>
+          <span><svg width="26" height="8" aria-hidden="true"><line x1="0" y1="4" x2="26" y2="4" stroke="var(--warn)" stroke-width="2" stroke-dasharray="7 5"></line></svg> второй кабель (петля)</span>
+          <span><svg width="26" height="8" aria-hidden="true"><line x1="0" y1="4" x2="26" y2="4" stroke="var(--accent)" stroke-width="2" stroke-dasharray="2 4"></line></svg> стек / кластер</span>
         </div>
       </section>
 
@@ -357,19 +361,43 @@
     var rows = {};
     net.nodes.forEach(function (n) {
       var r = LAYER[n.kind];
-      if (n.kind === "srv") { r = 3; }
       (rows[r] = rows[r] || []).push(n);
     });
-    var yOf = [30, 92, 155, 225, 296, 360];
-    Object.keys(rows).forEach(function (r) {
-      var row = rows[r], y = yOf[r] || 380;
-      // тесный ряд разносим в два уровня, чтобы подписи не наезжали
-      var stagger = row.length > 4;
-      var step = 700 / (row.length + 1);
-      row.forEach(function (n, i) {
-        n.x = Math.min(700 - widthOf(n) / 2, Math.max(widthOf(n) / 2 + 8, 10 + step * (i + 1)));
-        n.y = y + (stagger && i % 2 ? 42 : 0);
-      });
+    var yOf = [34, 112, 192, 272, 352, 432];
+    var W = 760, GAP = 20;
+
+    function place(row, y) {
+      var widths = row.map(widthOf);
+      var total = widths.reduce(function (a, b) { return a + b; }, 0) + GAP * (row.length - 1);
+      if (total <= W - 24 || row.length < 3) {
+        var x = (W - total) / 2;
+        row.forEach(function (n, i) { n.x = x + widths[i] / 2; n.y = y; x += widths[i] + GAP; });
+      } else {                       // ряд не влезает — разносим на две строки
+        var half = Math.ceil(row.length / 2);
+        place(row.slice(0, half), y);
+        place(row.slice(half), y + 50);
+      }
+    }
+
+    // ряды сверху вниз: каждый следующий сортируем по «центру тяжести» связей
+    // с уже расставленным рядом выше — так линии почти не пересекаются
+    var levels = Object.keys(rows).map(Number).sort(function (a, b) { return a - b; });
+    var placed = {};
+    levels.forEach(function (lvl, idx) {
+      var row = rows[lvl];
+      if (idx > 0) {
+        row.forEach(function (n) {
+          var xs = [];
+          net.links.forEach(function (l) {
+            var other = l.a === n.id ? l.b : (l.b === n.id ? l.a : null);
+            if (other && placed[other] !== undefined) { xs.push(placed[other]); }
+          });
+          n._bary = xs.length ? xs.reduce(function (a, b) { return a + b; }, 0) / xs.length : W / 2;
+        });
+        row.sort(function (a, b) { return a._bary - b._bary; });
+      }
+      place(row, yOf[lvl] !== undefined ? yOf[lvl] : 440);
+      row.forEach(function (n) { placed[n.id] = n.x; });
     });
   }
 
@@ -389,11 +417,27 @@
     var svg = document.getElementById("svg");
     svg.innerHTML = "";
 
+    function pathFor(A, B) {
+      if (Math.abs(A.y - B.y) < 30) {          // связь внутри ряда — дугой снизу
+        var sag = 46;
+        return "M " + A.x + " " + (A.y + 15) + " C " + A.x + " " + (A.y + sag) +
+               " " + B.x + " " + (B.y + sag) + " " + B.x + " " + (B.y + 15);
+      }
+      var top = A.y < B.y ? A : B, bot = A.y < B.y ? B : A;   // сверху вниз
+      var my = top.y + (bot.y - top.y) * 0.55;
+      return "M " + top.x + " " + (top.y + 15) + " L " + top.x + " " + my +
+             " L " + bot.x + " " + my + " L " + bot.x + " " + (bot.y - 15);
+    }
+
     net.links.forEach(function (l, i) {
       var A = nodeById(l.a), B = nodeById(l.b), on = !!selection.links[i];
-      svg.appendChild(el("line", { x1: A.x, y1: A.y, x2: B.x, y2: B.y,
-        stroke: on ? "var(--pick)" : "var(--line)", "stroke-width": on ? 3.4 : 1.8 }));
-      var hit = el("line", { x1: A.x, y1: A.y, x2: B.x, y2: B.y, stroke: "transparent", "stroke-width": 16, class: "hit" });
+      var d = pathFor(A, B);
+      var color = on ? "var(--pick)" : l.loop ? "var(--warn)" : l.stack ? "var(--accent)" : "var(--line)";
+      var dash = l.loop ? "7 5" : l.stack ? "2 4" : "none";
+      svg.appendChild(el("path", { d: d, fill: "none", stroke: color,
+        "stroke-width": on ? 3.2 : (l.loop ? 2 : 1.7), "stroke-dasharray": on ? "none" : dash,
+        "stroke-linejoin": "round" }));
+      var hit = el("path", { d: d, fill: "none", stroke: "transparent", "stroke-width": 15, class: "hit" });
       hit.addEventListener("click", function () { selection.links[i] = !selection.links[i]; draw(); renderPicked(); });
       svg.appendChild(hit);
     });
