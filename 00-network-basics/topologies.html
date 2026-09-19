@@ -1,0 +1,413 @@
+<title>Топологии сетей</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    --bg: #eef1ee;
+    --surface: #ffffff;
+    --surface-2: #f6f8f6;
+    --line: #d3dbd6;
+    --ink: #14201c;
+    --muted: #5c6b64;
+    --accent: #0d6e64;
+    --accent-soft: #d9ece9;
+    --ok: #16794f;
+    --bad: #b3261e;
+    --warn: #a9560a;
+    --node: #f6f8f6;
+    --radius: 10px;
+    --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0d1412; --surface: #141d1a; --surface-2: #19241f; --line: #27352f;
+      --ink: #e4ece8; --muted: #94a69e; --accent: #38c2ae; --accent-soft: #14312c;
+      --ok: #4cc38a; --bad: #f26d63; --warn: #e09a4e; --node: #1d2a25;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0d1412; --surface: #141d1a; --surface-2: #19241f; --line: #27352f;
+    --ink: #e4ece8; --muted: #94a69e; --accent: #38c2ae; --accent-soft: #14312c;
+    --ok: #4cc38a; --bad: #f26d63; --warn: #e09a4e; --node: #1d2a25;
+  }
+
+  body { background: var(--bg); color: var(--ink); font-family: var(--font-sans); font-size: 15px; line-height: 1.55; margin: 0; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 56px; }
+  .eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 0 0 4px; }
+  h1 { font-size: clamp(24px, 4vw, 33px); line-height: 1.12; margin: 0; font-weight: 700; letter-spacing: -.015em; text-wrap: balance; }
+  .sub { color: var(--muted); margin: 8px 0 0; max-width: 64ch; }
+  header.top { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: flex-end; justify-content: space-between; margin-bottom: 22px; }
+
+  .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+  .tabs button { font-family: var(--font-sans); font-size: 13.5px; font-weight: 500; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 7px 14px; cursor: pointer; }
+  .tabs button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+  :root[data-theme="dark"] .tabs button[aria-pressed="true"], :root:not([data-theme="light"]) .tabs button[aria-pressed="true"] { color: #06120f; }
+  .tabs button:focus-visible, .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+  @media (max-width: 920px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+  .panel + .panel { margin-top: 18px; }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+  .panel-head h2 { font-size: 12.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; margin: 0; color: var(--muted); font-family: var(--font-mono); }
+  .panel-body { padding: 16px; }
+
+  svg.topo { display: block; width: 100%; height: auto; max-width: 100%; touch-action: manipulation; }
+  svg.topo .wire { cursor: pointer; }
+  svg.topo .hit { cursor: pointer; }
+
+  .status { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; padding: 0 16px 14px; font-family: var(--font-mono); font-size: 12.5px; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); }
+  .pill.ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, var(--line)); }
+  .pill.bad { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 40%, var(--line)); }
+  .btn { font-family: var(--font-sans); font-size: 13px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); padding: 6px 11px; cursor: pointer; }
+  .btn:hover { border-color: var(--accent); }
+
+  h3 { font-size: 18px; margin: 0 0 6px; font-weight: 600; letter-spacing: -.01em; }
+  .lead { margin: 0 0 14px; color: var(--muted); }
+  dl.facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 14px; margin: 0 0 14px; font-size: 14px; }
+  dl.facts dt { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); padding-top: 3px; }
+  dl.facts dd { margin: 0; }
+  .plus, .minus { display: flex; gap: 8px; margin: 0 0 6px; font-size: 14px; }
+  .plus::before { content: "+"; color: var(--ok); font-family: var(--font-mono); font-weight: 600; }
+  .minus::before { content: "−"; color: var(--bad); font-family: var(--font-mono); font-weight: 600; }
+  .where { margin-top: 14px; padding: 12px 14px; border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 6px 6px 0; font-size: 13.5px; }
+  .where b { font-weight: 600; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  .scroll { overflow-x: auto; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+  td.rate { font-family: var(--font-mono); white-space: nowrap; }
+  .foot { margin-top: 26px; color: var(--muted); font-size: 13px; max-width: 70ch; }
+  .tip { font-size: 13px; color: var(--muted); margin: 10px 0 0; }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Сети с нуля · шаг 1</p>
+      <h1>Топологии сетей</h1>
+      <p class="sub">Пять способов соединить устройства. Нажимай на кабели и узлы, чтобы оборвать их, и смотри, кто останется без связи.</p>
+    </div>
+    <button class="btn" id="theme" type="button">Сменить тему</button>
+  </header>
+
+  <div class="tabs" id="tabs" role="group" aria-label="Выбор топологии"></div>
+
+  <div class="grid">
+    <div>
+      <section class="panel">
+        <div class="panel-head">
+          <h2 id="topo-title">Схема</h2>
+          <button class="btn" id="repair" type="button">Починить всё</button>
+        </div>
+        <svg class="topo" id="svg" viewBox="0 0 560 330" role="img" aria-label="Схема топологии"></svg>
+        <div class="status">
+          <span class="pill" id="pill-links">кабелей: 0</span>
+          <span class="pill" id="pill-state">сеть цела</span>
+          <span id="hint-text" style="color:var(--muted)">клик по кабелю или узлу — обрыв</span>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>Сравнение</h2></div>
+        <div class="panel-body scroll">
+          <table>
+            <thead><tr><th>Топология</th><th>Кабелей</th><th>Обрыв одного кабеля</th><th>Где встречается сегодня</th></tr></thead>
+            <tbody id="cmp"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <div>
+      <section class="panel">
+        <div class="panel-head"><h2>Разбор</h2></div>
+        <div class="panel-body" id="detail"></div>
+      </section>
+    </div>
+  </div>
+
+  <p class="foot">Топология — это форма связей, а не форма проводов в коробе. Физически кабели в офисе почти всегда идут «звездой» в серверную, а логика работы может быть любой: кольцо на уровне оператора связи, дерево между этажами, полносвязная схема в центре обработки данных.</p>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- модели топологий ---------- */
+  function ring(n, cx, cy, r) {
+    var nodes = [], i, a;
+    for (i = 0; i < n; i++) {
+      a = -Math.PI / 2 + i * 2 * Math.PI / n;
+      nodes.push({ id: "N" + (i + 1), x: cx + r * Math.cos(a), y: cy + r * Math.sin(a), kind: "pc" });
+    }
+    return nodes;
+  }
+
+  var TOPOS = {
+    bus: {
+      name: "Шина",
+      title: "Шина (bus)",
+      lead: "Все устройства подключены к одному общему кабелю. Историческая схема: коаксиальные сети 10BASE2 в 1990-х.",
+      facts: [["Кабелей", "минимум, один общий сегмент"], ["Узкое место", "сам кабель"], ["Коллизии", "все делят одну среду передачи"]],
+      plus: ["Дёшево и просто: один кабель на всех"],
+      minus: ["Обрыв кабеля кладёт всю сеть", "Все устройства делят полосу и мешают друг другу", "Трудно найти место повреждения"],
+      where: "В проводных сетях не используется. Но идея общей среды жива: <b>Wi-Fi</b> — та же шина, только в радиоэфире, поэтому соседние точки доступа и мешают друг другу.",
+      build: function () {
+        var nodes = [{ id: "BUS", x: 280, y: 60, kind: "bus" }], links = [], i;
+        for (i = 0; i < 5; i++) {
+          nodes.push({ id: "PC" + (i + 1), x: 70 + i * 105, y: 230, kind: "pc" });
+          links.push({ a: "BUS", b: "PC" + (i + 1), tap: 70 + i * 105 });
+        }
+        return { nodes: nodes, links: links, backbone: true };
+      }
+    },
+    ringT: {
+      name: "Кольцо",
+      title: "Кольцо (ring)",
+      lead: "Каждое устройство соединено с двумя соседями, образуя замкнутый круг. Данные идут по кругу.",
+      facts: [["Кабелей", "столько же, сколько узлов"], ["Резерв", "есть: два пути до каждого узла"], ["Задержка", "растёт с числом узлов"]],
+      plus: ["Один обрыв сеть не рушит: трафик идёт в обход", "Экономия кабеля при большой протяжённости"],
+      minus: ["Второй обрыв разрывает сеть на части", "Нужен протокол защиты кольца, иначе кадры ходят вечно", "Добавление узла затрагивает соседей"],
+      where: "Магистрали операторов связи и сети предприятий между зданиями: <b>ERPS</b>, <b>SDH</b>, кольца на оптике. В офисной сети кольцо встречается случайно, когда кто-то соединил два коммутатора вторым кабелем, и тогда его должен погасить протокол <b>STP</b>.",
+      build: function () {
+        var nodes = ring(6, 280, 165, 120), links = [], i;
+        for (i = 0; i < nodes.length; i++) {
+          links.push({ a: nodes[i].id, b: nodes[(i + 1) % nodes.length].id });
+        }
+        return { nodes: nodes, links: links };
+      }
+    },
+    star: {
+      name: "Звезда",
+      title: "Звезда (star)",
+      lead: "Все устройства подключены к одному центральному узлу — коммутатору. Основная схема современных сетей.",
+      facts: [["Кабелей", "по одному на устройство"], ["Центр", "коммутатор, единая точка отказа"], ["Поиск проблем", "простой: видно порт"]],
+      plus: ["Обрыв одного кабеля отключает только одно устройство", "Легко добавлять устройства и находить неисправности", "Каждому достаётся вся полоса порта"],
+      minus: ["Отказ центрального коммутатора отключает весь сегмент", "Расход кабеля: до каждого рабочего места свой"],
+      where: "<b>Так построена почти каждая офисная сеть.</b> Отсюда и требование резервировать центр: второй блок питания, стек из двух коммутаторов, два аплинка.",
+      build: function () {
+        var nodes = [{ id: "SW", x: 280, y: 70, kind: "sw" }], links = [], i;
+        var pos = ring(5, 280, 200, 130);
+        for (i = 0; i < 5; i++) {
+          pos[i].y = 240; pos[i].x = 60 + i * 110; pos[i].label = "PC" + (i + 1);
+          nodes.push(pos[i]);
+          links.push({ a: "SW", b: pos[i].id });
+        }
+        return { nodes: nodes, links: links };
+      }
+    },
+    tree: {
+      name: "Дерево",
+      title: "Дерево (tree), она же иерархическая",
+      lead: "Звёзды, объединённые в уровни: ядро сети, уровень распределения по этажам, уровень доступа к рабочим местам.",
+      facts: [["Уровни", "ядро → распределение → доступ"], ["Масштаб", "сотни и тысячи портов"], ["Риск", "отказ узла отключает всю ветку"]],
+      plus: ["Масштабируется на большое здание или кампус", "Трафик отдела остаётся внутри своей ветки", "Удобно разграничивать сегменты и ставить средства защиты на стыках"],
+      minus: ["Отказ узла верхнего уровня отключает всё под ним", "Дороже: нужны коммутаторы нескольких классов"],
+      where: "<b>Стандарт для зданий и кампусов.</b> Именно на стыке уровней ставят межсетевой экран и NGFW: там проходит весь трафик между сегментами.",
+      build: function () {
+        var nodes = [
+          { id: "CORE", x: 280, y: 45, kind: "sw", label: "Ядро" },
+          { id: "D1", x: 160, y: 150, kind: "sw", label: "Этаж 1" },
+          { id: "D2", x: 400, y: 150, kind: "sw", label: "Этаж 2" },
+          { id: "A1", x: 70, y: 265, kind: "pc" }, { id: "A2", x: 190, y: 265, kind: "pc" },
+          { id: "A3", x: 330, y: 265, kind: "pc" }, { id: "A4", x: 460, y: 265, kind: "pc" }
+        ];
+        var links = [
+          { a: "CORE", b: "D1" }, { a: "CORE", b: "D2" },
+          { a: "D1", b: "A1" }, { a: "D1", b: "A2" },
+          { a: "D2", b: "A3" }, { a: "D2", b: "A4" }
+        ];
+        return { nodes: nodes, links: links };
+      }
+    },
+    mesh: {
+      name: "Полносвязная",
+      title: "Полносвязная (mesh)",
+      lead: "Каждый узел соединён с каждым. Максимальная живучесть за счёт количества связей.",
+      facts: [["Кабелей", "n × (n − 1) / 2 — при 5 узлах уже 10"], ["Резерв", "несколько независимых путей"], ["Цена", "самая высокая"]],
+      plus: ["Выдерживает несколько обрывов подряд", "Нет единой точки отказа", "Трафик балансируется по путям"],
+      minus: ["Число связей растёт квадратично", "Сложная настройка маршрутизации", "Дорого по портам и кабелю"],
+      where: "Центры обработки данных (схема <b>Clos / spine-leaf</b> — частичная полносвязность), магистрали операторов, беспроводные mesh-сети и связь между площадками по нескольким каналам.",
+      build: function () {
+        var nodes = ring(5, 280, 165, 120), links = [], i, j;
+        for (i = 0; i < nodes.length; i++) {
+          for (j = i + 1; j < nodes.length; j++) { links.push({ a: nodes[i].id, b: nodes[j].id }); }
+        }
+        return { nodes: nodes, links: links };
+      }
+    }
+  };
+
+  var ORDER = ["bus", "ringT", "star", "tree", "mesh"];
+  var CMP = [
+    ["Шина", "1 общий", "вся сеть ложится", "Wi-Fi как общая среда"],
+    ["Кольцо", "= числу узлов", "сеть работает в обход", "магистрали операторов, ERPS"],
+    ["Звезда", "= числу узлов", "отключается один узел", "офисные сети, этаж здания"],
+    ["Дерево", "= числу узлов", "отключается ветка", "здания и кампусы"],
+    ["Полносвязная", "n(n−1)/2", "почти незаметен", "ЦОД, связь между площадками"]
+  ];
+
+  var current = "star", model = null, broken = { links: {}, nodes: {} };
+
+  /* ---------- связность ---------- */
+  function aliveNodes() {
+    return model.nodes.filter(function (n) { return !broken.nodes[n.id]; });
+  }
+
+  function reachableFrom(startId) {
+    var seen = {}, queue = [startId], adj = {};
+    model.links.forEach(function (l, i) {
+      if (broken.links[i] || broken.nodes[l.a] || broken.nodes[l.b]) { return; }
+      (adj[l.a] = adj[l.a] || []).push(l.b);
+      (adj[l.b] = adj[l.b] || []).push(l.a);
+    });
+    seen[startId] = true;
+    while (queue.length) {
+      var cur = queue.shift();
+      (adj[cur] || []).forEach(function (nb) { if (!seen[nb]) { seen[nb] = true; queue.push(nb); } });
+    }
+    return seen;
+  }
+
+  function connectivity() {
+    var alive = aliveNodes().filter(function (n) { return n.kind !== "bus"; });
+    if (alive.length < 2) { return { ok: true, isolated: [], parts: 1 }; }
+    var seen = reachableFrom(alive[0].id);
+    var isolated = alive.filter(function (n) { return !seen[n.id]; }).map(function (n) { return n.label || n.id; });
+    return { ok: isolated.length === 0, isolated: isolated, parts: isolated.length ? 2 : 1 };
+  }
+
+  /* ---------- отрисовка ---------- */
+  var NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs) {
+    var e = document.createElementNS(NS, tag);
+    Object.keys(attrs).forEach(function (k) { e.setAttribute(k, attrs[k]); });
+    return e;
+  }
+  function byId(id) { return model.nodes.filter(function (n) { return n.id === id; })[0]; }
+
+  function draw() {
+    var svg = document.getElementById("svg");
+    svg.innerHTML = "";
+    var conn = connectivity(), lost = {};
+    conn.isolated.forEach(function (n) { lost[n] = true; });
+
+    if (model.backbone) {
+      var bus = byId("BUS"), busBroken = !!broken.links.bus0;
+      svg.appendChild(el("line", { x1: 60, y1: bus.y, x2: busBroken ? 255 : 500, y2: bus.y,
+        stroke: busBroken ? "var(--bad)" : "var(--accent)", "stroke-width": 6, "stroke-linecap": "round" }));
+      if (busBroken) {
+        svg.appendChild(el("line", { x1: 305, y1: bus.y, x2: 500, y2: bus.y, stroke: "var(--bad)", "stroke-width": 6, "stroke-linecap": "round" }));
+        var bolt = el("text", { x: 280, y: bus.y + 5, "text-anchor": "middle", "font-size": 18, fill: "var(--bad)" });
+        bolt.textContent = "✕"; svg.appendChild(bolt);
+      }
+      var hit = el("rect", { x: 60, y: bus.y - 12, width: 440, height: 24, fill: "transparent", class: "hit" });
+      hit.addEventListener("click", function () { broken.links.bus0 = !broken.links.bus0; draw(); });
+      svg.appendChild(hit);
+      var cap = el("text", { x: 280, y: bus.y - 22, "text-anchor": "middle", "font-family": "var(--font-mono)", "font-size": 11, fill: "var(--muted)" });
+      cap.textContent = "общий кабель"; svg.appendChild(cap);
+    }
+
+    model.links.forEach(function (l, i) {
+      var A = byId(l.a), B = byId(l.b);
+      var ax = l.tap !== undefined ? l.tap : A.x, ay = l.tap !== undefined ? A.y : A.y;
+      var dead = broken.links[i] || broken.nodes[l.a] || broken.nodes[l.b];
+      var color = dead ? "var(--bad)" : "var(--accent)";
+      var line = el("line", { x1: ax, y1: ay, x2: B.x, y2: B.y, stroke: color,
+        "stroke-width": dead ? 1.6 : 2.2, "stroke-dasharray": dead ? "5 5" : "none", class: "wire" });
+      svg.appendChild(line);
+      var hitL = el("line", { x1: ax, y1: ay, x2: B.x, y2: B.y, stroke: "transparent", "stroke-width": 16, class: "hit" });
+      hitL.addEventListener("click", function () { broken.links[i] = !broken.links[i]; draw(); });
+      svg.appendChild(hitL);
+      if (dead && !broken.nodes[l.a] && !broken.nodes[l.b]) {
+        var x = el("text", { x: (ax + B.x) / 2, y: (ay + B.y) / 2 + 5, "text-anchor": "middle", "font-size": 15, fill: "var(--bad)" });
+        x.textContent = "✕"; svg.appendChild(x);
+      }
+    });
+
+    model.nodes.forEach(function (n) {
+      if (n.kind === "bus") { return; }
+      var isSw = n.kind === "sw", w = isSw ? 84 : 72, h = isSw ? 34 : 30;
+      var dead = !!broken.nodes[n.id], isolated = !dead && lost[n.label || n.id];
+      var stroke = dead ? "var(--bad)" : isolated ? "var(--warn)" : "var(--line)";
+      var g = el("g", { class: "hit" });
+      g.appendChild(el("rect", { x: n.x - w / 2, y: n.y - h / 2, width: w, height: h, rx: isSw ? 7 : 5,
+        fill: "var(--node)", stroke: stroke, "stroke-width": dead || isolated ? 2 : 1.2,
+        "stroke-dasharray": dead ? "4 3" : "none" }));
+      var t = el("text", { x: n.x, y: n.y + 4, "text-anchor": "middle", "font-family": "var(--font-mono)",
+        "font-size": isSw ? 12 : 11, "font-weight": isSw ? 600 : 400,
+        fill: dead ? "var(--bad)" : isolated ? "var(--warn)" : "var(--ink)" });
+      t.textContent = n.label || n.id;
+      g.appendChild(t);
+      if (isSw) {
+        var sub = el("text", { x: n.x, y: n.y + h / 2 + 13, "text-anchor": "middle", "font-family": "var(--font-mono)", "font-size": 10, fill: "var(--muted)" });
+        sub.textContent = "коммутатор"; g.appendChild(sub);
+      }
+      g.addEventListener("click", function () { broken.nodes[n.id] = !broken.nodes[n.id]; draw(); });
+      svg.appendChild(g);
+    });
+
+    var deadLinks = Object.keys(broken.links).filter(function (k) { return broken.links[k]; }).length;
+    var deadNodes = Object.keys(broken.nodes).filter(function (k) { return broken.nodes[k]; }).length;
+    document.getElementById("pill-links").textContent = "связей: " + model.links.length + (deadLinks ? " · оборвано " + deadLinks : "");
+    var st = document.getElementById("pill-state");
+    var busDown = model.backbone && broken.links.bus0;
+    if (busDown) {
+      st.textContent = "сеть распалась: общий кабель оборван"; st.className = "pill bad";
+    } else if (conn.isolated.length) {
+      st.textContent = "без связи: " + conn.isolated.join(", "); st.className = "pill bad";
+    } else if (deadLinks || deadNodes) {
+      st.textContent = "связь сохранена, идёт по обходному пути"; st.className = "pill ok";
+    } else {
+      st.textContent = "сеть цела"; st.className = "pill ok";
+    }
+  }
+
+  function renderDetail() {
+    var t = TOPOS[current];
+    document.getElementById("topo-title").textContent = t.name;
+    document.getElementById("detail").innerHTML =
+      "<h3>" + t.title + "</h3><p class='lead'>" + t.lead + "</p>" +
+      "<dl class='facts'>" + t.facts.map(function (f) { return "<dt>" + f[0] + "</dt><dd>" + f[1] + "</dd>"; }).join("") + "</dl>" +
+      t.plus.map(function (p) { return "<p class='plus'>" + p + "</p>"; }).join("") +
+      t.minus.map(function (p) { return "<p class='minus'>" + p + "</p>"; }).join("") +
+      "<div class='where'><b>Где это сейчас:</b> " + t.where + "</div>" +
+      "<p class='tip'>Попробуй оборвать разные кабели и узлы на схеме слева — состояние сети пересчитывается сразу.</p>";
+  }
+
+  function select(key) {
+    current = key;
+    model = TOPOS[key].build();
+    broken = { links: {}, nodes: {} };
+    Array.prototype.forEach.call(document.querySelectorAll("#tabs button"), function (b) {
+      b.setAttribute("aria-pressed", String(b.dataset.key === key));
+    });
+    renderDetail();
+    draw();
+  }
+
+  document.getElementById("tabs").innerHTML = ORDER.map(function (k) {
+    return '<button type="button" data-key="' + k + '" aria-pressed="false">' + TOPOS[k].name + "</button>";
+  }).join("");
+  Array.prototype.forEach.call(document.querySelectorAll("#tabs button"), function (b) {
+    b.addEventListener("click", function () { select(b.dataset.key); });
+  });
+  document.getElementById("cmp").innerHTML = CMP.map(function (r) {
+    return "<tr><td><b>" + r[0] + "</b></td><td class='rate'>" + r[1] + "</td><td>" + r[2] + "</td><td>" + r[3] + "</td></tr>";
+  }).join("");
+  document.getElementById("repair").addEventListener("click", function () { broken = { links: {}, nodes: {} }; draw(); });
+  document.getElementById("theme").addEventListener("click", function () {
+    var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    var cur = document.documentElement.getAttribute("data-theme") || (prefersDark ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", cur === "dark" ? "light" : "dark");
+  });
+
+  select("star");
+})();
+</script>
