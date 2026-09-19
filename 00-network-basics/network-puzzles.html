@@ -1,0 +1,592 @@
+<title>Разбор чужой сети</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    --bg: #eef1ee; --surface: #ffffff; --surface-2: #f6f8f6; --line: #d3dbd6;
+    --ink: #14201c; --muted: #5c6b64; --accent: #0d6e64; --accent-soft: #d9ece9;
+    --ok: #16794f; --bad: #b3261e; --warn: #a9560a; --pick: #0f62c4; --node: #f6f8f6;
+    --radius: 10px;
+    --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0d1412; --surface: #141d1a; --surface-2: #19241f; --line: #27352f;
+      --ink: #e4ece8; --muted: #94a69e; --accent: #38c2ae; --accent-soft: #14312c;
+      --ok: #4cc38a; --bad: #f26d63; --warn: #e09a4e; --pick: #6aa8f5; --node: #1d2a25;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0d1412; --surface: #141d1a; --surface-2: #19241f; --line: #27352f;
+    --ink: #e4ece8; --muted: #94a69e; --accent: #38c2ae; --accent-soft: #14312c;
+    --ok: #4cc38a; --bad: #f26d63; --warn: #e09a4e; --pick: #6aa8f5; --node: #1d2a25;
+  }
+
+  body { background: var(--bg); color: var(--ink); font-family: var(--font-sans); font-size: 15px; line-height: 1.55; margin: 0; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding-inline: 16px; padding-block: 26px 56px; }
+  header.top { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: flex-end; justify-content: space-between; margin-bottom: 18px; }
+  .eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 0 0 4px; }
+  h1 { font-size: clamp(23px, 4vw, 32px); line-height: 1.12; margin: 0; font-weight: 700; letter-spacing: -.015em; text-wrap: balance; }
+  .sub { color: var(--muted); margin: 8px 0 0; max-width: 62ch; }
+
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; align-items: center; }
+  .btn { font-family: var(--font-sans); font-size: 13.5px; font-weight: 500; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 8px 13px; cursor: pointer; }
+  .btn:hover { border-color: var(--accent); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  :root[data-theme="dark"] .btn.primary, :root:not([data-theme="light"]) .btn.primary { color: #06120f; }
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .score { margin-left: auto; font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); }
+
+  .grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+  @media (max-width: 950px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+  .panel + .panel { margin-top: 16px; }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 16px; border-bottom: 1px solid var(--line); }
+  .panel-head h2 { font-size: 12.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; margin: 0; color: var(--muted); font-family: var(--font-mono); }
+  .panel-body { padding: 16px; }
+
+  svg.net { display: block; width: 100%; height: auto; max-width: 100%; touch-action: manipulation; }
+  svg.net .hit { cursor: pointer; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 0 16px 12px; font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .sw { width: 11px; height: 11px; border-radius: 3px; border: 1.5px solid currentColor; display: inline-block; }
+
+  .q-kind { font-family: var(--font-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); margin: 0 0 6px; }
+  .q-text { font-size: 16.5px; font-weight: 600; margin: 0 0 6px; line-height: 1.35; text-wrap: balance; }
+  .q-help { color: var(--muted); font-size: 13.5px; margin: 0 0 14px; }
+  .picked { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); margin: 0 0 12px; min-height: 20px; }
+  .verdict { border-radius: 8px; padding: 12px 14px; font-size: 14px; margin-top: 4px; border: 1px solid var(--line); background: var(--surface-2); }
+  .verdict.ok { border-color: color-mix(in srgb, var(--ok) 45%, var(--line)); }
+  .verdict.bad { border-color: color-mix(in srgb, var(--bad) 45%, var(--line)); }
+  .verdict h4 { margin: 0 0 6px; font-size: 14.5px; }
+  .verdict.ok h4 { color: var(--ok); }
+  .verdict.bad h4 { color: var(--bad); }
+  .verdict p { margin: 0 0 8px; }
+  .verdict p:last-child { margin-bottom: 0; }
+  .verdict b { font-weight: 600; }
+
+  .choices { display: flex; flex-direction: column; gap: 8px; margin: 0 0 12px; }
+  .choices button { text-align: left; font-family: var(--font-sans); font-size: 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); padding: 10px 12px; cursor: pointer; }
+  .choices button[aria-pressed="true"] { border-color: var(--pick); box-shadow: inset 0 0 0 1px var(--pick); }
+
+  ul.inv { list-style: none; margin: 0; padding: 0; font-family: var(--font-mono); font-size: 12.5px; display: flex; flex-direction: column; gap: 4px; }
+  ul.inv li { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; border-bottom: 1px dotted var(--line); }
+  ul.inv li span:last-child { color: var(--muted); }
+  .foot { margin-top: 24px; color: var(--muted); font-size: 13px; max-width: 74ch; }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Сети с нуля · тренажёр</p>
+      <h1>Разбор чужой сети</h1>
+      <p class="sub">Каждый раз новая схема офиса с реальными ошибками проектирования. Задание — найти на ней петлю, точку отказа, лишнее устройство или место для межсетевого экрана.</p>
+    </div>
+    <button class="btn" id="theme" type="button">Сменить тему</button>
+  </header>
+
+  <div class="bar">
+    <button class="btn primary" id="gen-net" type="button">Сгенерировать сеть</button>
+    <button class="btn" id="gen-task" type="button">Новое задание</button>
+    <button class="btn" id="clear" type="button">Сбросить выбор</button>
+    <span class="score" id="score">решено: 0 · попыток: 0</span>
+  </div>
+
+  <div class="grid">
+    <div>
+      <section class="panel">
+        <div class="panel-head"><h2 id="net-name">Схема</h2><span style="font-family:var(--font-mono);font-size:11.5px;color:var(--muted)" id="net-size"></span></div>
+        <svg class="net" id="svg" viewBox="0 0 720 440" role="img" aria-label="Схема сети офиса"></svg>
+        <div class="legend">
+          <span><i class="sw" style="color:var(--accent)"></i> сетевое оборудование</span>
+          <span><i class="sw" style="color:var(--warn)"></i> рабочие места и периферия</span>
+          <span><i class="sw" style="color:var(--bad)"></i> внешняя зона</span>
+          <span><i class="sw" style="color:var(--pick)"></i> выбрано тобой</span>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>Что стоит в сети</h2></div>
+        <div class="panel-body"><ul class="inv" id="inv"></ul></div>
+      </section>
+    </div>
+
+    <div>
+      <section class="panel">
+        <div class="panel-head"><h2>Задание</h2><span id="q-num" style="font-family:var(--font-mono);font-size:11.5px;color:var(--muted)"></span></div>
+        <div class="panel-body">
+          <p class="q-kind" id="q-kind"></p>
+          <p class="q-text" id="q-text">Нажми «Сгенерировать сеть».</p>
+          <p class="q-help" id="q-help"></p>
+          <div class="choices" id="choices" hidden></div>
+          <p class="picked" id="picked"></p>
+          <button class="btn primary" id="check" type="button">Проверить ответ</button>
+          <div id="verdict"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <p class="foot">Схемы генерируются случайно, поэтому задача каждый раз новая. Ошибки в них не выдуманные: петли из-за второго кабеля, единственный коммутатор ядра, гостевой Wi-Fi в общей сети, камеры рядом с серверами, неуправляемый хаб под столом — всё это встречается в реальных офисах.</p>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* =========================== утилиты =========================== */
+  function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+  function chance(p) { return Math.random() < p; }
+  function range(n) { var r = [], i; for (i = 0; i < n; i++) { r.push(i); } return r; }
+
+  var KINDS = {
+    inet:    { label: "Интернет",    zone: "ext",  w: 96 },
+    fw:      { label: "Межсетевой экран", zone: "net", w: 132 },
+    core:    { label: "Ядро",        zone: "net",  w: 96 },
+    dist:    { label: "Распределение", zone: "net", w: 112 },
+    access:  { label: "Доступ",      zone: "net",  w: 104 },
+    hub:     { label: "Хаб",         zone: "net",  w: 86 },
+    srv:     { label: "Серверы",     zone: "srv",  w: 104 },
+    pc:      { label: "Рабочие места", zone: "user", w: 112 },
+    ap:      { label: "Wi-Fi",       zone: "user", w: 96 },
+    cam:     { label: "Камеры",      zone: "user", w: 92 },
+    prn:     { label: "Принтеры",    zone: "user", w: 96 }
+  };
+
+  var net = null, selection = { nodes: {}, links: {} }, task = null;
+  var stats = { solved: 0, tries: 0 };
+
+  /* =========================== генератор сети =========================== */
+  function genNetwork() {
+    var nodes = [], links = [], id = 0, flags = {};
+    function add(kind, label, extra) {
+      var n = { id: "n" + (id++), kind: kind, label: label || KINDS[kind].label };
+      if (extra) { Object.keys(extra).forEach(function (k) { n[k] = extra[k]; }); }
+      nodes.push(n); return n;
+    }
+    function link(a, b, extra) {
+      var l = { a: a.id, b: b.id };
+      if (extra) { Object.keys(extra).forEach(function (k) { l[k] = extra[k]; }); }
+      links.push(l); return l;
+    }
+
+    var inet = add("inet", "Интернет");
+    var fw = add("fw", "Межсетевой экран");
+    link(inet, fw);
+
+    // ядро: одно (точка отказа) или два в стеке
+    var singleCore = chance(0.55);
+    var cores = singleCore ? [add("core", "Ядро SW-CORE")]
+                           : [add("core", "Ядро SW-CORE1"), add("core", "Ядро SW-CORE2")];
+    cores.forEach(function (c) { link(fw, c); });
+    if (cores.length === 2) { link(cores[0], cores[1], { stack: true }); }
+    flags.singleCore = singleCore;
+
+    // уровень распределения
+    var distCount = pick([2, 2, 3]);
+    var dists = range(distCount).map(function (i) { return add("dist", "Этаж " + (i + 1) + " SW-D" + (i + 1)); });
+    dists.forEach(function (d) { cores.forEach(function (c) { link(c, d); }); });
+
+    // уровень доступа
+    var accs = [];
+    dists.forEach(function (d, i) {
+      var cnt = pick([1, 1, 2]);
+      range(cnt).forEach(function (j) {
+        var a = add("access", "SW-A" + (i + 1) + (j + 1));
+        link(d, a);
+        accs.push(a);
+        var users = add("pc", "Отдел " + (i + 1) + (cnt > 1 ? "." + (j + 1) : ""), { vlan: 10 * (i + 1) });
+        link(a, users);
+      });
+    });
+
+    // серверы
+    var srvHost = pick(cores);
+    var srv = add("srv", "Серверы 1С/AD", { vlan: 100 });
+    link(srvHost, srv);
+
+    // принтеры
+    if (chance(0.7)) { var prn = add("prn", "Принтеры", { vlan: 40 }); link(pick(accs), prn); }
+
+    /* ---- вносим типовые ошибки ---- */
+
+    // 1. петля: второй кабель между коммутаторами доступа
+    flags.loop = false;
+    if (accs.length >= 2 && chance(0.75)) {
+      var pair = accs.slice().sort(function () { return Math.random() - 0.5; }).slice(0, 2);
+      link(pair[0], pair[1], { loop: true, note: "второй кабель, проложен «для надёжности»" });
+      flags.loop = true;
+    }
+
+    // 2. неуправляемый хаб под столом
+    flags.hub = false;
+    if (chance(0.6)) {
+      var host = pick(accs);
+      var hub = add("hub", "Хаб под столом", { rogue: true });
+      link(host, hub);
+      link(hub, add("pc", "Стол переговорной", { vlan: 0 }));
+      flags.hub = true;
+    }
+
+    // 3. гостевой Wi-Fi без отделения
+    flags.guest = false;
+    if (chance(0.8)) {
+      var apHost = chance(0.5) ? pick(cores) : pick(accs);
+      var ap = add("ap", "Гостевой Wi-Fi", { untrusted: true, vlan: 0 });
+      link(apHost, ap, { untrustedEdge: true });
+      flags.guest = true;
+    }
+
+    // 4. камеры в общей сети
+    flags.cam = false;
+    if (chance(0.65)) {
+      var cam = add("cam", "IP-камеры", { untrusted: true, vlan: 0 });
+      link(pick(accs), cam, { untrustedEdge: true });
+      flags.cam = true;
+    }
+
+    return { nodes: nodes, links: links, flags: flags, name: pick([
+      "Офис «Вектор», 2 этажа", "Компания «Ритм», головной офис", "Филиал «Север»",
+      "Производственная площадка", "Торговая сеть, центральный офис"
+    ]) };
+  }
+
+  /* =========================== анализ графа =========================== */
+  function adjacency(excludeNode) {
+    var adj = {};
+    net.links.forEach(function (l) {
+      if (l.a === excludeNode || l.b === excludeNode) { return; }
+      (adj[l.a] = adj[l.a] || []).push(l.b);
+      (adj[l.b] = adj[l.b] || []).push(l.a);
+    });
+    return adj;
+  }
+
+  function componentSize(startId, excludeNode) {
+    var adj = adjacency(excludeNode), seen = {}, queue = [startId], n = 0;
+    if (startId === excludeNode) { return 0; }
+    seen[startId] = true;
+    while (queue.length) {
+      var cur = queue.shift(); n++;
+      (adj[cur] || []).forEach(function (nb) { if (!seen[nb]) { seen[nb] = true; queue.push(nb); } });
+    }
+    return n;
+  }
+
+  // узлы, отключение которых рвёт сеть, с числом отрезанных устройств
+  function spofRanking() {
+    var alive = net.nodes.length, out = [];
+    net.nodes.forEach(function (n) {
+      if (n.kind === "inet") { return; }
+      var others = net.nodes.filter(function (x) { return x.id !== n.id; });
+      if (!others.length) { return; }
+      var reach = componentSize(others[0].id, n.id);
+      var cut = (alive - 1) - reach;
+      if (cut > 0) { out.push({ id: n.id, cut: cut }); }
+    });
+    out.sort(function (a, b) { return b.cut - a.cut; });
+    return out;
+  }
+
+  // рёбра, образующие цикл (лишние связи сверх остовного дерева)
+  function loopEdges() {
+    var parent = {};
+    function find(x) { while (parent[x] !== x) { parent[x] = parent[parent[x]]; x = parent[x]; } return x; }
+    net.nodes.forEach(function (n) { parent[n.id] = n.id; });
+    var extra = [];
+    net.links.forEach(function (l, i) {
+      var ra = find(l.a), rb = find(l.b);
+      if (ra === rb) { extra.push(i); } else { parent[ra] = rb; }
+    });
+    return extra;
+  }
+
+  function nodeById(id) { return net.nodes.filter(function (n) { return n.id === id; })[0]; }
+  function nameOf(id) { var n = nodeById(id); return n ? n.label : id; }
+
+  /* =========================== раскладка =========================== */
+  var LAYER = { inet: 0, fw: 1, core: 2, dist: 3, access: 4, hub: 5, srv: 3, pc: 5, ap: 5, cam: 5, prn: 5 };
+
+  // ширина «коробочки» — по длине подписи, чтобы текст не вылезал
+  function widthOf(n) { return Math.max(KINDS[n.kind].w, n.label.length * 6.5 + 14); }
+
+  function layout() {
+    var rows = {};
+    net.nodes.forEach(function (n) {
+      var r = LAYER[n.kind];
+      if (n.kind === "srv") { r = 3; }
+      (rows[r] = rows[r] || []).push(n);
+    });
+    var yOf = [30, 92, 155, 225, 296, 360];
+    Object.keys(rows).forEach(function (r) {
+      var row = rows[r], y = yOf[r] || 380;
+      // тесный ряд разносим в два уровня, чтобы подписи не наезжали
+      var stagger = row.length > 4;
+      var step = 700 / (row.length + 1);
+      row.forEach(function (n, i) {
+        n.x = Math.min(700 - widthOf(n) / 2, Math.max(widthOf(n) / 2 + 8, 10 + step * (i + 1)));
+        n.y = y + (stagger && i % 2 ? 42 : 0);
+      });
+    });
+  }
+
+  /* =========================== отрисовка =========================== */
+  var NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs) {
+    var e = document.createElementNS(NS, tag);
+    Object.keys(attrs).forEach(function (k) { e.setAttribute(k, attrs[k]); });
+    return e;
+  }
+  function zoneColor(kind) {
+    var z = KINDS[kind].zone;
+    return z === "ext" ? "var(--bad)" : z === "user" ? "var(--warn)" : z === "srv" ? "var(--accent)" : "var(--accent)";
+  }
+
+  function draw() {
+    var svg = document.getElementById("svg");
+    svg.innerHTML = "";
+
+    net.links.forEach(function (l, i) {
+      var A = nodeById(l.a), B = nodeById(l.b), on = !!selection.links[i];
+      svg.appendChild(el("line", { x1: A.x, y1: A.y, x2: B.x, y2: B.y,
+        stroke: on ? "var(--pick)" : "var(--line)", "stroke-width": on ? 3.4 : 1.8 }));
+      var hit = el("line", { x1: A.x, y1: A.y, x2: B.x, y2: B.y, stroke: "transparent", "stroke-width": 16, class: "hit" });
+      hit.addEventListener("click", function () { selection.links[i] = !selection.links[i]; draw(); renderPicked(); });
+      svg.appendChild(hit);
+    });
+
+    net.nodes.forEach(function (n) {
+      var w = widthOf(n), h = 30, on = !!selection.nodes[n.id];
+      var color = on ? "var(--pick)" : zoneColor(n.kind);
+      var g = el("g", { class: "hit" });
+      g.appendChild(el("rect", { x: n.x - w / 2, y: n.y - h / 2, width: w, height: h, rx: 6,
+        fill: "var(--node)", stroke: color, "stroke-width": on ? 2.6 : 1.4 }));
+      var t = el("text", { x: n.x, y: n.y + 4, "text-anchor": "middle", "font-family": "var(--font-mono)",
+        "font-size": 11, fill: on ? "var(--pick)" : "var(--ink)" });
+      t.textContent = n.label;
+      g.appendChild(t);
+      if (n.vlan) {
+        var v = el("text", { x: n.x, y: n.y + h / 2 + 12, "text-anchor": "middle",
+          "font-family": "var(--font-mono)", "font-size": 9.5, fill: "var(--muted)" });
+        v.textContent = "VLAN " + n.vlan;
+        g.appendChild(v);
+      }
+      g.addEventListener("click", function () { selection.nodes[n.id] = !selection.nodes[n.id]; draw(); renderPicked(); });
+      svg.appendChild(g);
+    });
+
+    document.getElementById("net-name").textContent = net.name;
+    document.getElementById("net-size").textContent = net.nodes.length + " устройств · " + net.links.length + " связей";
+    document.getElementById("inv").innerHTML = net.nodes.map(function (n) {
+      return "<li><span>" + n.label + "</span><span>" + KINDS[n.kind].label.toLowerCase() +
+        (n.vlan ? " · VLAN " + n.vlan : (n.vlan === 0 ? " · VLAN не выделен" : "")) + "</span></li>";
+    }).join("");
+  }
+
+  function renderPicked() {
+    var ns = Object.keys(selection.nodes).filter(function (k) { return selection.nodes[k]; }).map(nameOf);
+    var ls = Object.keys(selection.links).filter(function (k) { return selection.links[k]; }).map(function (i) {
+      var l = net.links[i]; return nameOf(l.a) + " ↔ " + nameOf(l.b);
+    });
+    var all = ns.concat(ls);
+    document.getElementById("picked").textContent = all.length ? "выбрано: " + all.join(" · ") : "ничего не выбрано";
+  }
+
+  /* =========================== задания =========================== */
+  function makeTasks() {
+    var list = [];
+    var loops = loopEdges().filter(function (i) { return !net.links[i].stack; });
+    var spof = spofRanking();
+
+    if (loops.length) {
+      list.push({
+        kind: "петля", answerType: "links", answer: loops,
+        text: "Где в этой сети петля?",
+        help: "Нажми на кабель (или кабели), из-за которого кадры могут ходить по кругу.",
+        explain: function () {
+          var l = net.links[loops[0]];
+          return "Лишний кабель <b>" + nameOf(l.a) + " ↔ " + nameOf(l.b) + "</b> замыкает путь: " +
+            "от коммутатора доступа вверх к ядру и обратно вниз. У кадра Ethernet нет поля TTL, " +
+            "поэтому широковещательный кадр кружит вечно и множится — это широковещательный шторм. " +
+            "Спасает протокол <b>STP</b>: он оставляет такой канал подключённым, но в блокировке, " +
+            "и включает его, только если упадёт основной.";
+        }
+      });
+    }
+
+    if (spof.length) {
+      var worst = spof[0];
+      list.push({
+        kind: "точка отказа", answerType: "nodes", answer: [worst.id],
+        text: "Отказ какого устройства отключит больше всего остальных?",
+        help: "Выбери одно устройство — самую критичную точку отказа.",
+        explain: function () {
+          return "Это <b>" + nameOf(worst.id) + "</b>: при его отказе связь теряют " + worst.cut +
+            " устройств. " + (net.flags.singleCore && nodeById(worst.id).kind === "core"
+              ? "Ядро здесь одно, резерва нет. Лечится стеком из двух коммутаторов ядра и двумя аплинками от каждого этажа."
+              : "Резервируется вторым каналом до соседнего узла уровня выше или агрегированным каналом (LACP).");
+        }
+      });
+    }
+
+    var rogue = net.nodes.filter(function (n) { return n.rogue; });
+    if (rogue.length) {
+      list.push({
+        kind: "лишнее оборудование", answerType: "nodes", answer: rogue.map(function (n) { return n.id; }),
+        text: "Какое устройство здесь лишнее и должно быть убрано?",
+        help: "Выбери устройство, которому не место в корпоративной сети.",
+        explain: function () {
+          return "<b>Хаб под столом</b> — неуправляемое устройство. Он повторяет каждый кадр во все порты, " +
+            "поэтому любой сосед видит чужой трафик, порт коммутатора не контролирует, кто именно подключён, " +
+            "а число устройств в сети растёт неучтённо. Заменяется управляемым коммутатором, а на порту доступа " +
+            "включается <b>port-security</b> с ограничением по числу MAC-адресов.";
+        }
+      });
+    }
+
+    var untrusted = net.nodes.filter(function (n) { return n.untrusted; });
+    if (untrusted.length) {
+      var edges = [];
+      net.links.forEach(function (l, i) { if (l.untrustedEdge) { edges.push(i); } });
+      list.push({
+        kind: "сегментация", answerType: "links", answer: edges,
+        text: "Где нужно разделить сеть, чтобы недоверенные устройства не попали к серверам?",
+        help: "Выбери связь (или связи), на которой должна проходить граница сегмента.",
+        explain: function () {
+          return "Недоверенные устройства здесь: <b>" + untrusted.map(function (n) { return n.label; }).join(", ") +
+            "</b>. Гостевой Wi-Fi — это чужие устройства в твоей сети, а IP-камеры годами живут с " +
+            "уязвимой прошивкой и паролем по умолчанию: это типовая точка входа. " +
+            "Каждую такую группу выносят в отдельный VLAN, а трафик между ней и остальной сетью " +
+            "пропускают через межсетевой экран по правилу «запрещено всё, что не разрешено явно».";
+        }
+      });
+    }
+
+    var srvNode = net.nodes.filter(function (n) { return n.kind === "srv"; })[0];
+    if (srvNode) {
+      list.push({
+        kind: "что защищаем", answerType: "nodes", answer: [srvNode.id],
+        text: "Какой узел в этой схеме наиболее ценен для атакующего?",
+        help: "Выбери устройство, компрометация которого нанесёт максимальный ущерб.",
+        explain: function () {
+          return "<b>" + srvNode.label + "</b>. Там учётные записи домена и данные компании: " +
+            "получив их, атакующий получает всю сеть. Периметровый межсетевой экран от внутренней угрозы " +
+            "не спасает — нужен отдельный сегмент для серверов, правила доступа к нему, " +
+            "контроль административных протоколов (RDP, SMB) и сбор журналов в SIEM.";
+        }
+      });
+    }
+
+    // вопрос с вариантами: VLAN не проходит между этажами
+    var vlanId = pick([66, 77, 88, 99]);
+    list.push({
+      kind: "диагностика VLAN", answerType: "choice",
+      text: "В сеть добавили VLAN " + vlanId + " для нового отдела. Внутри этажа всё работает, между этажами — нет. Что проверять первым делом?",
+      help: "Выбери один вариант.",
+      choices: [
+        { t: "Список разрешённых VLAN на транке между коммутаторами: VLAN " + vlanId + " в него не добавлен", ok: true },
+        { t: "Кабель между этажами: он наверняка повреждён", ok: false },
+        { t: "Антивирус на рабочих станциях нового отдела", ok: false },
+        { t: "Скорость портов: нужно переключить на 1 Гбит/с", ok: false }
+      ],
+      explain: function () {
+        return "Внутри этажа VLAN " + vlanId + " живёт на одном коммутаторе и работает. Между этажами кадры идут " +
+          "по транку, а транк передаёт только разрешённые на нём VLAN. Забыли добавить — трафик молча пропадает. " +
+          "Проверяется командой <code>show interfaces trunk</code>, исправляется " +
+          "<code>switchport trunk allowed vlan add " + vlanId + "</code>. " +
+          "Кстати, «разрешить все VLAN на транке» — плохая практика: лишние сегменты расползаются по сети.";
+      }
+    });
+
+    return list;
+  }
+
+  function newTask() {
+    var pool = makeTasks();
+    var next = pick(pool.filter(function (t) { return !task || t.text !== task.text; }) || pool);
+    task = next || pool[0];
+    selection = { nodes: {}, links: {} };
+    document.getElementById("q-kind").textContent = task.kind;
+    document.getElementById("q-text").textContent = task.text;
+    document.getElementById("q-help").textContent = task.help;
+    document.getElementById("verdict").innerHTML = "";
+    var ch = document.getElementById("choices");
+    if (task.answerType === "choice") {
+      ch.hidden = false;
+      ch.innerHTML = task.choices.map(function (c, i) {
+        return '<button type="button" data-i="' + i + '" aria-pressed="false">' + c.t + "</button>";
+      }).join("");
+      Array.prototype.forEach.call(ch.querySelectorAll("button"), function (b) {
+        b.addEventListener("click", function () {
+          Array.prototype.forEach.call(ch.querySelectorAll("button"), function (x) { x.setAttribute("aria-pressed", "false"); });
+          b.setAttribute("aria-pressed", "true");
+        });
+      });
+      document.getElementById("picked").textContent = "";
+    } else {
+      ch.hidden = true; ch.innerHTML = "";
+      renderPicked();
+    }
+    draw();
+  }
+
+  function check() {
+    if (!task) { return; }
+    var ok, detail = "";
+    if (task.answerType === "choice") {
+      var btn = document.getElementById("choices").querySelector('button[aria-pressed="true"]');
+      if (!btn) { detail = "Сначала выбери вариант."; ok = null; }
+      else { ok = task.choices[+btn.dataset.i].ok; }
+    } else {
+      var store = task.answerType === "links" ? selection.links : selection.nodes;
+      var got = Object.keys(store).filter(function (k) { return store[k]; });
+      var want = task.answer.map(String);
+      if (!got.length) { detail = "Ничего не выбрано — нажми на элемент схемы."; ok = null; }
+      else {
+        ok = got.length === want.length && want.every(function (w) { return got.indexOf(w) >= 0; });
+        if (!ok) {
+          var extra = got.filter(function (g) { return want.indexOf(g) < 0; }).length;
+          var miss = want.filter(function (w) { return got.indexOf(w) < 0; }).length;
+          detail = (miss ? "Не найдено: " + miss + ". " : "") + (extra ? "Лишних: " + extra + "." : "");
+        }
+      }
+    }
+
+    var box = document.getElementById("verdict");
+    if (ok === null) { box.innerHTML = '<div class="verdict">' + detail + "</div>"; return; }
+    stats.tries++;
+    if (ok) { stats.solved++; }
+    document.getElementById("score").textContent = "решено: " + stats.solved + " · попыток: " + stats.tries;
+    box.innerHTML = '<div class="verdict ' + (ok ? "ok" : "bad") + '"><h4>' +
+      (ok ? "Верно" : "Пока нет" + (detail ? " — " + detail : "")) + "</h4><p>" + task.explain() + "</p></div>";
+  }
+
+  /* =========================== запуск =========================== */
+  function newNetwork() {
+    net = genNetwork();
+    layout();
+    selection = { nodes: {}, links: {} };
+    task = null;
+    draw();
+    newTask();
+  }
+
+  document.getElementById("gen-net").addEventListener("click", newNetwork);
+  document.getElementById("gen-task").addEventListener("click", function () { if (net) { newTask(); } });
+  document.getElementById("clear").addEventListener("click", function () {
+    selection = { nodes: {}, links: {} }; draw(); renderPicked();
+    document.getElementById("verdict").innerHTML = "";
+  });
+  document.getElementById("check").addEventListener("click", check);
+  document.getElementById("theme").addEventListener("click", function () {
+    var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    var cur = document.documentElement.getAttribute("data-theme") || (prefersDark ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", cur === "dark" ? "light" : "dark");
+  });
+
+  newNetwork();
+})();
+</script>
