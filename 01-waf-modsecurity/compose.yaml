@@ -1,0 +1,42 @@
+# Лаба 01: уязвимое веб-приложение DVWA + WAF ModSecurity (OWASP CRS)
+#
+#   http://localhost:8080  -> DVWA напрямую (без защиты)
+#   http://localhost:8081  -> DVWA через WAF
+#
+# Порты слушают только 127.0.0.1 — уязвимое приложение не видно из сети.
+
+services:
+  db:
+    image: mariadb:10
+    environment:
+      MYSQL_ROOT_PASSWORD: dvwa
+      MYSQL_DATABASE: dvwa
+      MYSQL_USER: dvwa
+      MYSQL_PASSWORD: p@ssw0rd
+    restart: unless-stopped
+
+  dvwa:
+    image: ghcr.io/digininja/dvwa:latest
+    environment:
+      DB_SERVER: db
+      DEFAULT_SECURITY_LEVEL: low
+    depends_on: [db]
+    ports:
+      - "127.0.0.1:8080:80"
+    restart: unless-stopped
+
+  waf:
+    image: owasp/modsecurity-crs:nginx
+    environment:
+      BACKEND: http://dvwa:80
+      MODSEC_RULE_ENGINE: "On"        # On = блокировать, DetectionOnly = только логировать
+      BLOCKING_PARANOIA: 1            # 1..4 — строгость правил
+      ANOMALY_INBOUND: 5              # порог блокировки по «баллам аномалий»
+      MODSEC_AUDIT_LOG: /var/log/modsec/audit.log
+      MODSEC_AUDIT_LOG_FORMAT: JSON
+    volumes:
+      - ./logs:/var/log/modsec
+    depends_on: [dvwa]
+    ports:
+      - "127.0.0.1:8081:8080"
+    restart: unless-stopped
