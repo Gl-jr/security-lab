@@ -15,6 +15,8 @@
     --ok: #16794f;
     --bad: #b3261e;
     --warn: #a9560a;
+    --seg3: #6b3fc4;
+    --seg4: #0f62c4;
     --node: #f6f8f6;
     --radius: 10px;
     --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -24,13 +26,13 @@
     :root:not([data-theme="light"]) {
       --bg: #0d1412; --surface: #141d1a; --surface-2: #19241f; --line: #27352f;
       --ink: #e4ece8; --muted: #94a69e; --accent: #38c2ae; --accent-soft: #14312c;
-      --ok: #4cc38a; --bad: #f26d63; --warn: #e09a4e; --node: #1d2a25;
+      --ok: #4cc38a; --bad: #f26d63; --warn: #e09a4e; --seg3: #a98bf0; --seg4: #6aa8f5; --node: #1d2a25;
     }
   }
   :root[data-theme="dark"] {
     --bg: #0d1412; --surface: #141d1a; --surface-2: #19241f; --line: #27352f;
     --ink: #e4ece8; --muted: #94a69e; --accent: #38c2ae; --accent-soft: #14312c;
-    --ok: #4cc38a; --bad: #f26d63; --warn: #e09a4e; --node: #1d2a25;
+    --ok: #4cc38a; --bad: #f26d63; --warn: #e09a4e; --seg3: #a98bf0; --seg4: #6aa8f5; --node: #1d2a25;
   }
 
   body { background: var(--bg); color: var(--ink); font-family: var(--font-sans); font-size: 15px; line-height: 1.55; margin: 0; }
@@ -290,6 +292,7 @@
   function nameOf(id) { var n = byId(id); return (n && n.label) || id; }
 
   /* ---------- отрисовка ---------- */
+  var SEG_COLORS = ["var(--accent)", "var(--warn)", "var(--seg3)", "var(--seg4)"];
   var NS = "http://www.w3.org/2000/svg";
   function el(tag, attrs) {
     var e = document.createElementNS(NS, tag);
@@ -301,9 +304,14 @@
   function draw() {
     var svg = document.getElementById("svg");
     svg.innerHTML = "";
-    var parts = segments(), lost = {};
-    // всё, что не попало в самый большой сегмент, считается отрезанным
-    parts.slice(1).forEach(function (p) { p.forEach(function (id) { lost[id] = true; }); });
+    // Каждый связный сегмент получает свой номер и цвет: при распаде сети
+    // помечаются ВСЕ части, а не только оторвавшаяся.
+    var parts = segments(), segOf = {}, split = parts.length > 1;
+    parts.forEach(function (p, i) { p.forEach(function (id) { segOf[id] = i; }); });
+    function segColor(id) {
+      if (!split) { return "var(--accent)"; }
+      return SEG_COLORS[(segOf[id] || 0) % SEG_COLORS.length];
+    }
 
     if (model.backbone) {
       var bus = byId("BUS"), busBroken = !!broken.links.bus0;
@@ -325,7 +333,7 @@
       var A = byId(l.a), B = byId(l.b);
       var ax = l.tap !== undefined ? l.tap : A.x, ay = l.tap !== undefined ? A.y : A.y;
       var dead = broken.links[i] || broken.nodes[l.a] || broken.nodes[l.b];
-      var color = dead ? "var(--bad)" : "var(--accent)";
+      var color = dead ? "var(--bad)" : segColor(l.b);
       var line = el("line", { x1: ax, y1: ay, x2: B.x, y2: B.y, stroke: color,
         "stroke-width": dead ? 1.6 : 2.2, "stroke-dasharray": dead ? "5 5" : "none", class: "wire" });
       svg.appendChild(line);
@@ -341,17 +349,25 @@
     model.nodes.forEach(function (n) {
       if (n.kind === "bus") { return; }
       var isSw = n.kind === "sw", w = isSw ? 84 : 72, h = isSw ? 34 : 30;
-      var dead = !!broken.nodes[n.id], isolated = !dead && !!lost[n.id];
-      var stroke = dead ? "var(--bad)" : isolated ? "var(--warn)" : "var(--line)";
+      var dead = !!broken.nodes[n.id], marked = !dead && split;
+      var stroke = dead ? "var(--bad)" : marked ? segColor(n.id) : "var(--line)";
       var g = el("g", { class: "hit" });
       g.appendChild(el("rect", { x: n.x - w / 2, y: n.y - h / 2, width: w, height: h, rx: isSw ? 7 : 5,
-        fill: "var(--node)", stroke: stroke, "stroke-width": dead || isolated ? 2 : 1.2,
+        fill: "var(--node)", stroke: stroke, "stroke-width": dead || marked ? 2 : 1.2,
         "stroke-dasharray": dead ? "4 3" : "none" }));
       var t = el("text", { x: n.x, y: n.y + 4, "text-anchor": "middle", "font-family": "var(--font-mono)",
         "font-size": isSw ? 12 : 11, "font-weight": isSw ? 600 : 400,
-        fill: dead ? "var(--bad)" : isolated ? "var(--warn)" : "var(--ink)" });
+        fill: dead ? "var(--bad)" : marked ? stroke : "var(--ink)" });
       t.textContent = n.label || n.id;
       g.appendChild(t);
+      if (marked) {   // номер сегмента, к которому узел теперь относится
+        g.appendChild(el("circle", { cx: n.x + w / 2 - 2, cy: n.y - h / 2 + 2, r: 8,
+          fill: "var(--surface)", stroke: stroke, "stroke-width": 1.5 }));
+        var badge = el("text", { x: n.x + w / 2 - 2, y: n.y - h / 2 + 6, "text-anchor": "middle",
+          "font-family": "var(--font-mono)", "font-size": 10, "font-weight": 600, fill: stroke });
+        badge.textContent = String((segOf[n.id] || 0) + 1);
+        g.appendChild(badge);
+      }
       if (isSw) {
         var sub = el("text", { x: n.x, y: n.y + h / 2 + 13, "text-anchor": "middle", "font-family": "var(--font-mono)", "font-size": 10, fill: "var(--muted)" });
         sub.textContent = "коммутатор"; g.appendChild(sub);
@@ -369,8 +385,9 @@
       st.textContent = "сеть распалась: общий кабель оборван, узлы изолированы";
       st.className = "pill bad";
     } else if (parts.length > 1) {
-      st.textContent = "сеть распалась на " + parts.length + " сегмента: " +
-        parts.map(function (p) { return "[" + p.map(nameOf).join(" ") + "]"; }).join(" ⟂ ");
+      var word = parts.length < 5 ? " сегмента: " : " сегментов: ";
+      st.textContent = "сеть распалась на " + parts.length + word +
+        parts.map(function (p, i) { return (i + 1) + ") " + p.map(nameOf).join(" "); }).join("  |  ");
       st.className = "pill bad";
     } else if (deadLinks || deadNodes) {
       st.textContent = parts.length === 0 ? "живых узлов не осталось" : "связь сохранена, идёт по обходному пути";
