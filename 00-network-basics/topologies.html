@@ -260,28 +260,34 @@
     return model.nodes.filter(function (n) { return !broken.nodes[n.id]; });
   }
 
-  function reachableFrom(startId) {
-    var seen = {}, queue = [startId], adj = {};
+  /* Делит уцелевшие узлы на связные сегменты, от большего к меньшему. */
+  function segments() {
+    var alive = aliveNodes().filter(function (n) { return n.kind !== "bus"; });
+    var adj = {}, seen = {}, parts = [];
+    var busDown = model.backbone && broken.links.bus0;
     model.links.forEach(function (l, i) {
-      if (broken.links[i] || broken.nodes[l.a] || broken.nodes[l.b]) { return; }
+      if (broken.links[i] || broken.nodes[l.a] || broken.nodes[l.b] || busDown) { return; }
       (adj[l.a] = adj[l.a] || []).push(l.b);
       (adj[l.b] = adj[l.b] || []).push(l.a);
     });
-    seen[startId] = true;
-    while (queue.length) {
-      var cur = queue.shift();
-      (adj[cur] || []).forEach(function (nb) { if (!seen[nb]) { seen[nb] = true; queue.push(nb); } });
-    }
-    return seen;
+    alive.forEach(function (start) {
+      if (seen[start.id]) { return; }
+      var queue = [start.id], part = [];
+      seen[start.id] = true;
+      while (queue.length) {
+        var cur = queue.shift();
+        if (!broken.nodes[cur] && byId(cur) && byId(cur).kind !== "bus") { part.push(cur); }
+        (adj[cur] || []).forEach(function (nb) {
+          if (!seen[nb] && !broken.nodes[nb]) { seen[nb] = true; queue.push(nb); }
+        });
+      }
+      parts.push(part);
+    });
+    parts.sort(function (a, b) { return b.length - a.length; });
+    return parts;
   }
 
-  function connectivity() {
-    var alive = aliveNodes().filter(function (n) { return n.kind !== "bus"; });
-    if (alive.length < 2) { return { ok: true, isolated: [], parts: 1 }; }
-    var seen = reachableFrom(alive[0].id);
-    var isolated = alive.filter(function (n) { return !seen[n.id]; }).map(function (n) { return n.label || n.id; });
-    return { ok: isolated.length === 0, isolated: isolated, parts: isolated.length ? 2 : 1 };
-  }
+  function nameOf(id) { var n = byId(id); return (n && n.label) || id; }
 
   /* ---------- отрисовка ---------- */
   var NS = "http://www.w3.org/2000/svg";
@@ -295,8 +301,9 @@
   function draw() {
     var svg = document.getElementById("svg");
     svg.innerHTML = "";
-    var conn = connectivity(), lost = {};
-    conn.isolated.forEach(function (n) { lost[n] = true; });
+    var parts = segments(), lost = {};
+    // всё, что не попало в самый большой сегмент, считается отрезанным
+    parts.slice(1).forEach(function (p) { p.forEach(function (id) { lost[id] = true; }); });
 
     if (model.backbone) {
       var bus = byId("BUS"), busBroken = !!broken.links.bus0;
@@ -334,7 +341,7 @@
     model.nodes.forEach(function (n) {
       if (n.kind === "bus") { return; }
       var isSw = n.kind === "sw", w = isSw ? 84 : 72, h = isSw ? 34 : 30;
-      var dead = !!broken.nodes[n.id], isolated = !dead && lost[n.label || n.id];
+      var dead = !!broken.nodes[n.id], isolated = !dead && !!lost[n.id];
       var stroke = dead ? "var(--bad)" : isolated ? "var(--warn)" : "var(--line)";
       var g = el("g", { class: "hit" });
       g.appendChild(el("rect", { x: n.x - w / 2, y: n.y - h / 2, width: w, height: h, rx: isSw ? 7 : 5,
@@ -359,11 +366,15 @@
     var st = document.getElementById("pill-state");
     var busDown = model.backbone && broken.links.bus0;
     if (busDown) {
-      st.textContent = "сеть распалась: общий кабель оборван"; st.className = "pill bad";
-    } else if (conn.isolated.length) {
-      st.textContent = "без связи: " + conn.isolated.join(", "); st.className = "pill bad";
+      st.textContent = "сеть распалась: общий кабель оборван, узлы изолированы";
+      st.className = "pill bad";
+    } else if (parts.length > 1) {
+      st.textContent = "сеть распалась на " + parts.length + " сегмента: " +
+        parts.map(function (p) { return "[" + p.map(nameOf).join(" ") + "]"; }).join(" ⟂ ");
+      st.className = "pill bad";
     } else if (deadLinks || deadNodes) {
-      st.textContent = "связь сохранена, идёт по обходному пути"; st.className = "pill ok";
+      st.textContent = parts.length === 0 ? "живых узлов не осталось" : "связь сохранена, идёт по обходному пути";
+      st.className = parts.length === 0 ? "pill bad" : "pill ok";
     } else {
       st.textContent = "сеть цела"; st.className = "pill ok";
     }
