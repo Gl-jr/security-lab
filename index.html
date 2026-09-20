@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Security Lab — портфолио по ИБ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    --bg: #eef1ee; --surface: #ffffff; --surface-2: #f6f8f6; --line: #d3dbd6;
+    --ink: #14201c; --muted: #5c6b64; --accent: #0d6e64; --accent-soft: #d9ece9;
+    --radius: 12px;
+    --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1412; --surface: #141d1a; --surface-2: #19241f; --line: #27352f;
+      --ink: #e4ece8; --muted: #94a69e; --accent: #38c2ae; --accent-soft: #14312c;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--font-sans); font-size: 16px; line-height: 1.55; margin: 0; padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 40px 16px 64px; }
+  .eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+  h1 { font-size: clamp(28px, 6vw, 40px); line-height: 1.1; margin: 0; font-weight: 700; letter-spacing: -.02em; }
+  .sub { color: var(--muted); margin: 12px 0 0; max-width: 60ch; font-size: 17px; }
+  h2 { font-size: 13px; font-family: var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 40px 0 14px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+  a.card { display: block; text-decoration: none; color: inherit; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; transition: border-color .15s, transform .15s; }
+  a.card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  a.card .tag { font-family: var(--font-mono); font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: var(--accent); }
+  a.card h3 { margin: 8px 0 6px; font-size: 19px; font-weight: 600; letter-spacing: -.01em; }
+  a.card p { margin: 0; color: var(--muted); font-size: 14px; }
+  .repo { margin-top: 40px; padding: 18px 20px; background: var(--accent-soft); border-radius: var(--radius); font-size: 15px; }
+  .repo a { color: var(--accent); font-weight: 600; }
+  footer { margin-top: 48px; color: var(--muted); font-size: 13px; font-family: var(--font-mono); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Практическое портфолио · информационная безопасность</p>
+  <h1>Security Lab</h1>
+  <p class="sub">Домашняя лаборатория и интерактивные тренажёры по сетям и защите информации: WAF, межсетевые экраны, IDS/IPS, SIEM. Всё сделано и оформлено своими руками.</p>
+
+  <h2>Тренажёры — сети</h2>
+  <div class="grid">
+    <a class="card" href="00-network-basics/topologies.html">
+      <span class="tag">теория</span>
+      <h3>Топологии сетей</h3>
+      <p>Пять топологий с проверкой на отказ: обрывай кабели и смотри, кто теряет связь.</p>
+    </a>
+    <a class="card" href="00-network-basics/osi-journey.html">
+      <span class="tag">теория</span>
+      <h3>Путь пакета по уровням</h3>
+      <p>Как запрос обрастает заголовками и что читает каждое устройство по модели OSI.</p>
+    </a>
+    <a class="card" href="00-network-basics/network-puzzles.html">
+      <span class="tag">практика</span>
+      <h3>Разбор чужой сети</h3>
+      <p>Генератор офисных схем с ошибками и 50+ заданий: найди петлю, точку отказа, дыру.</p>
+    </a>
+    <a class="card" href="02-network-vlan/simulator.html">
+      <span class="tag">практика</span>
+      <h3>Сетевой симулятор</h3>
+      <p>Командная строка Cisco: VLAN, транки, маршрутизация, ACL — пять сценариев.</p>
+    </a>
+  </div>
+
+  <h2>Тренажёры — защита</h2>
+  <div class="grid">
+    <a class="card" href="04-rules-dojo/dojo.html">
+      <span class="tag">практика</span>
+      <h3>Дожо правил безопасности</h3>
+      <p>Пиши и разбирай правила Suricata, nftables, Cisco ACL, MikroTik и WAF.</p>
+    </a>
+  </div>
+
+  <div class="repo">
+    Полные отчёты по лабораторным (WAF, Wazuh SIEM), конфигурации и исходный код —
+    в репозитории <a href="https://github.com/Gl-jr/security-lab">github.com/Gl-jr/security-lab</a>.
+  </div>
+
+  <footer>Security Lab · практическое портфолио</footer>
+</div>
+</body>
+</html>
