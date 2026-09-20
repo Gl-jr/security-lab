@@ -76,6 +76,10 @@
   .verdict b { font-weight: 600; }
   .verdict code { font-family: var(--font-mono); font-size: .92em; background: var(--code-bg); color: var(--code-ink); padding: 1px 5px; border-radius: 4px; }
   .controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+  textarea.answer { width: 100%; box-sizing: border-box; min-height: 92px; resize: vertical; font-family: var(--font-mono); font-size: 13px; line-height: 1.5; padding: 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--code-bg); color: var(--code-ink); margin: 0 0 12px; }
+  textarea.answer:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .write-hint { font-family: var(--font-mono); font-size: 12px; color: var(--muted); margin: 0 0 10px; }
+  pre.model { background: var(--code-bg); color: var(--code-ink); font-family: var(--font-mono); font-size: 13px; line-height: 1.5; padding: 12px; border-radius: 8px; overflow-x: auto; margin: 10px 0 0; white-space: pre; border: 1px dashed var(--accent); }
 
   details.ref { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 14px; }
   details.ref summary { cursor: pointer; font-family: var(--font-mono); font-size: 13px; color: var(--muted); }
@@ -127,7 +131,11 @@
     <p class="q-scenario" id="q-scenario"></p>
     <div id="code-slot"></div>
     <div class="choices" id="choices"></div>
-    <button class="btn primary" id="check" type="button">Проверить</button>
+    <div id="write-slot"></div>
+    <div class="controls">
+      <button class="btn primary" id="check" type="button">Проверить</button>
+      <button class="btn" id="model" type="button" hidden>Показать эталон</button>
+    </div>
     <div id="verdict"></div>
 
     <details class="ref">
@@ -150,7 +158,26 @@
     suricata: "Suricata", nft: "Firewall Linux", cisco: "Cisco ACL",
     mikrotik: "MikroTik", waf: "WAF ModSecurity"
   };
-  var TYPE_LABEL = { read: "прочитай правило", build: "выбери верное", fix: "найди ошибку", fill: "дополни" };
+  var TYPE_LABEL = { read: "прочитай правило", build: "выбери верное", fix: "найди ошибку", fill: "дополни",
+    write: "напиши правило", modify: "измени правило", remove: "удали правило" };
+
+  // нормализация ввода: нижний регистр, точки с запятой и лишние пробелы убираем
+  function norm(s) { return (s || "").toLowerCase().replace(/[;]+/g, " ").replace(/\s+/g, " ").trim(); }
+  // проверка: все элементы must (строка ИЛИ массив-синонимы) должны встретиться
+  function matchAll(input, must) {
+    var n = norm(input);
+    return must.every(function (m) {
+      var opts = Array.isArray(m) ? m : [m];
+      return opts.some(function (o) { return n.indexOf(norm(o)) >= 0; });
+    });
+  }
+  function missingParts(input, must) {
+    var n = norm(input);
+    return must.filter(function (m) {
+      var opts = Array.isArray(m) ? m : [m];
+      return !opts.some(function (o) { return n.indexOf(norm(o)) >= 0; });
+    }).map(function (m) { return Array.isArray(m) ? m[0] : m; });
+  }
   var DIFF_LABEL = { easy: "лёгкий", medium: "средний", hard: "сложный" };
 
   // Банк заданий. Каждое: sys, diff, type, q(вопрос), scenario, code(опц.), choices[{t,ok}], explain
@@ -357,7 +384,84 @@
         { t: "Перенаправить на другую страницу", ok: false },
         { t: "Замедлить запрос на 403 мс", ok: false }
       ],
-      explain: "deny = заблокировать, status:403 = какой код вернуть браузеру. Помнишь режимы из лабы 01? deny — это режим блокировки (On). Если заменить на pass, правило только запишет в журнал — это режим DetectionOnly." }
+      explain: "deny = заблокировать, status:403 = какой код вернуть браузеру. Помнишь режимы из лабы 01? deny — это режим блокировки (On). Если заменить на pass, правило только запишет в журнал — это режим DetectionOnly." },
+
+    // ================= НАПИШИ / ИЗМЕНИ / УДАЛИ =================
+
+    { sys: "cisco", diff: "medium", type: "write",
+      q: "Пришёл новый отдел продаж. Заведи для него VLAN 115 с именем SALES и отдай в него порты fa0/10–14 на коммутаторе.",
+      scenario: "Ты в режиме настройки коммутатора (SW1(config)#). Напиши команды — по одной на строку.",
+      writeHint: "Понадобится: создать VLAN с именем, выбрать диапазон портов, режим access, назначить VLAN.",
+      must: [["vlan 115"], ["name sales"], ["interface range fa0/10 - 14", "interface range fa0/10-14", "int range fa0/10 - 14", "int range fa0/10-14"], ["switchport mode access", "sw mode access"], ["switchport access vlan 115", "sw access vlan 115"]],
+      model: "vlan 115\n name SALES\n exit\ninterface range fa0/10 - 14\n switchport mode access\n switchport access vlan 115",
+      explain: "Сначала создаём VLAN и даём имя, потом выбираем группу портов и переводим их в access, затем назначаем в VLAN 115. Диапазон можно писать с пробелами вокруг дефиса или без — Cisco принимает оба варианта. Точный порядок строк не важен, важен состав." },
+
+    { sys: "cisco", diff: "hard", type: "write",
+      q: "Отделу продаж (сеть 192.168.115.0/24) нужен доступ к серверу 1С 192.168.100.10. Напиши список доступа 120, который это разрешает, а весь остальной доступ отдела к серверной сети 192.168.100.0/24 запрещает.",
+      scenario: "Пиши строки access-list. Помни про порядок и wildcard-маску Cisco (0.0.0.255).",
+      writeHint: "Сначала разрешить к нужному серверу (host), потом запретить к остальной серверной сети, в конце разрешить всё прочее.",
+      must: [["access-list 120 permit", "access-list 120 permit ip 192.168.115.0"], ["host 192.168.100.10", "192.168.100.10"], ["access-list 120 deny", "deny ip 192.168.115.0"], ["192.168.100.0 0.0.0.255"], ["permit ip any any"]],
+      model: "access-list 120 permit ip 192.168.115.0 0.0.0.255 host 192.168.100.10\naccess-list 120 deny ip 192.168.115.0 0.0.0.255 192.168.100.0 0.0.0.255\naccess-list 120 permit ip any any",
+      explain: "Порядок критичен: сначала точечное разрешение к серверу (host = один адрес), потом запрет к остальной серверной сети, в конце permit any any, иначе неявный deny перекроет весь остальной трафик отдела. Правила читаются сверху вниз до первого совпадения." },
+
+    { sys: "nft", diff: "medium", type: "write",
+      q: "Новому отделу (сеть 192.168.115.0/24) нужен доступ к файловому серверу по SMB (порт 445). Напиши одну строку правила nftables, которая это разрешает.",
+      scenario: "Правило добавляется в цепочку с политикой drop. Разреши TCP-порт 445 только для этой подсети.",
+      writeHint: "Нужны: протокол tcp, порт назначения 445, источник — подсеть, действие accept.",
+      must: [["tcp dport 445"], ["ip saddr 192.168.115.0/24", "192.168.115.0/24"], ["accept"]],
+      model: "tcp dport 445 ip saddr 192.168.115.0/24 accept",
+      explain: "dport 445 = порт SMB. saddr ограничивает источник новой подсетью, accept разрешает. Поскольку политика цепочки drop, всё остальное к этому порту останется закрытым — открыли ровно то, что нужно (принцип наименьших привилегий)." },
+
+    { sys: "mikrotik", diff: "medium", type: "write",
+      q: "На MikroTik: разреши новой сети 192.168.115.0/24 проходить сквозь роутер к серверу 192.168.100.10. Напиши команду добавления правила.",
+      scenario: "Трафик идёт между сетями, значит цепочка forward. Начни с /ip firewall filter add ...",
+      writeHint: "chain=forward, src-address подсеть, dst-address сервер, action=accept.",
+      must: [["chain=forward"], ["src-address=192.168.115.0/24"], ["dst-address=192.168.100.10"], ["action=accept"]],
+      model: "/ip firewall filter\nadd chain=forward src-address=192.168.115.0/24 dst-address=192.168.100.10 action=accept",
+      explain: "Между сетями трафик идёт через цепочку forward (не input — та про сам роутер). src-address = откуда, dst-address = куда, action=accept разрешает. Помни: в MikroTik нет неявного deny, поэтому запрещающее правило в конце цепочки добавляют отдельно." },
+
+    { sys: "suricata", diff: "medium", type: "write",
+      q: "Напиши правило Suricata, которое поднимает тревогу на любую попытку подключения по Telnet (порт 23) к машинам нашей сети. Telnet небезопасен и его быть не должно.",
+      scenario: "Своим правилам номер sid дают от 1000000. Текст тревоги придумай сам.",
+      writeHint: "Скелет: alert tcp any any -> $HOME_NET 23 (msg:\"...\"; sid:1000...;)",
+      must: [["alert tcp"], ["-> $home_net 23", "-> $home_net any", "$home_net 23"], ["msg:"], ["sid:"]],
+      model: 'alert tcp any any -> $HOME_NET 23 (msg:"Telnet-подключение обнаружено"; sid:1000050;)',
+      explain: "alert tcp = ловим TCP, направление в нашу сеть на порт 23. msg — текст тревоги (обязателен для читаемости), sid — обязательный уникальный номер. Telnet передаёт пароли открытым текстом, поэтому любое его появление стоит замечать." },
+
+    { sys: "cisco", diff: "easy", type: "modify",
+      q: "Транк между коммутаторами уже пропускает VLAN 10 и 20. Пришёл новый VLAN 115 — его тоже надо пустить через транк, НЕ затрагивая уже разрешённые. Напиши команду.",
+      code: '# сейчас на транке:\nswitchport trunk allowed vlan 10,20',
+      scenario: "Ты на интерфейсе транка. Нужно ДОБАВить VLAN, а не переписать список.",
+      writeHint: "Ключевое слово add сохраняет уже разрешённые VLAN.",
+      must: [["switchport trunk allowed vlan add 115", "sw trunk allowed vlan add 115", "trunk allowed vlan add 115"]],
+      model: "switchport trunk allowed vlan add 115",
+      explain: "Без слова add команда switchport trunk allowed vlan 115 ЗАМЕНИЛА бы список, и VLAN 10, 20 перестали бы ходить через транк — половина сети легла бы. add дописывает VLAN к существующим. Частая и болезненная ошибка на практике." },
+
+    { sys: "cisco", diff: "medium", type: "remove",
+      q: "Отдел продаж расформировали. Нужно удалить VLAN 115 с коммутатора. Напиши команду.",
+      scenario: "Ты в режиме настройки (config)#. Удаление в Cisco — команда с приставкой no.",
+      writeHint: "Многие команды отменяются добавлением no перед ними.",
+      must: [["no vlan 115"]],
+      model: "no vlan 115",
+      explain: "Приставка no отменяет команду: no vlan 115 удаляет VLAN. Это общий принцип Cisco — почти любая команда отменяется словом no перед ней (no shutdown, no access-list и т.д.). Порты, которые были в этом VLAN, останутся назначенными на несуществующий VLAN, поэтому их тоже надо переназначить." },
+
+    { sys: "nft", diff: "hard", type: "modify",
+      q: "Оказалось, что SMB-доступ выдали слишком широко. Измени условие так, чтобы к серверу 445 пускало только ОДИН адрес 192.168.115.50, а не всю подсеть. Напиши исправленную строку.",
+      code: '# было (слишком широко):\ntcp dport 445 ip saddr 192.168.115.0/24 accept',
+      scenario: "Сузь источник с подсети до одного хоста.",
+      writeHint: "Вместо подсети /24 укажи конкретный адрес.",
+      must: [["tcp dport 445"], ["192.168.115.50"], ["accept"]],
+      forbid: ["192.168.115.0/24"],
+      model: "tcp dport 445 ip saddr 192.168.115.50 accept",
+      explain: "Заменяем подсеть 192.168.115.0/24 на один адрес 192.168.115.50. Это принцип наименьших привилегий: давать доступ ровно тому, кому нужно, а не «на всякий случай всей сети». Чем уже правило, тем меньше поверхность атаки." },
+
+    { sys: "waf", diff: "hard", type: "write",
+      q: "Напиши правило ModSecurity, которое блокирует запрос с кодом 403, если в параметрах (ARGS) встречается признак обхода каталога ../ (path traversal).",
+      scenario: "Используй оператор @contains и фазу проверки тела запроса.",
+      writeHint: "Скелет: SecRule ARGS \"@contains ../\" \"id:...,phase:2,deny,status:403,msg:'...'\"",
+      must: [["secrule args"], ["@contains ../", "../"], ["phase:2"], ["deny"], ["status:403"], ["id:"]],
+      model: 'SecRule ARGS "@contains ../" "id:1005,phase:2,deny,status:403,msg:\'Path Traversal\'"',
+      explain: "SecRule ARGS = проверяем параметры. @contains ../ ищет последовательность выхода из каталога. phase:2 = смотрим тело запроса. deny,status:403 = блок с кодом 403. id обязателен. Так закрывают попытки прочитать чужие файлы вида ?file=../../etc/passwd." }
   ];
 
   var REF = [
@@ -425,7 +529,17 @@
     document.getElementById("q-scenario").style.display = task.scenario ? "block" : "none";
     document.getElementById("code-slot").innerHTML = task.code ? '<pre class="code">' + esc(task.code).replace(/____/g, '<span class="blank">____</span>') + '</pre>' : "";
 
-    var order = shuffle(task.choices);
+    var isWrite = !task.choices;
+    var writeSlot = document.getElementById("write-slot");
+    document.getElementById("model").hidden = !isWrite;
+    if (isWrite) {
+      writeSlot.innerHTML = (task.writeHint ? '<p class="write-hint">💡 ' + esc(task.writeHint) + '</p>' : '') +
+        '<textarea class="answer" id="answer" spellcheck="false" placeholder="напиши правило здесь, по одной команде на строку"></textarea>';
+    } else {
+      writeSlot.innerHTML = "";
+    }
+
+    var order = task.choices ? shuffle(task.choices) : [];
     choiceEls = [];
     var box = document.getElementById("choices");
     box.innerHTML = "";
@@ -447,19 +561,53 @@
 
   function check() {
     if (!task || answered) { return; }
+
+    // --- режим написания правила ---
+    if (!task.choices) {
+      var ta = document.getElementById("answer");
+      var input = ta ? ta.value : "";
+      if (!norm(input)) { document.getElementById("verdict").innerHTML = '<div class="verdict">Сначала напиши правило в поле выше.</div>'; return; }
+      var missing = missingParts(input, task.must);
+      var forbidden = (task.forbid || []).filter(function (f) { return norm(input).indexOf(norm(f)) >= 0; });
+      var ok = missing.length === 0 && forbidden.length === 0;
+      answered = true; stats.tries++;
+      if (ok) { stats.solved++; }
+      document.getElementById("score").textContent = "решено: " + stats.solved + " · попыток: " + stats.tries;
+      var note = "";
+      if (!ok) {
+        if (missing.length) { note += "<p><b>Не хватает:</b> <code>" + missing.map(esc).join("</code>, <code>") + "</code></p>"; }
+        if (forbidden.length) { note += "<p><b>Лишнее (убери):</b> <code>" + forbidden.map(esc).join("</code>, <code>") + "</code></p>"; }
+        note += '<p>Нажми «Показать эталон», чтобы сверить.</p>';
+      }
+      document.getElementById("verdict").innerHTML = '<div class="verdict ' + (ok ? "ok" : "bad") + '"><h4>' +
+        (ok ? "Верно — все нужные части на месте" : "Пока не хватает частей") + '</h4>' + note + '<p>' + task.explain + '</p></div>';
+      if (ok) { showModel(); }
+      return;
+    }
+
+    // --- режим выбора ---
     var picked = choiceEls.filter(function (b) { return b.getAttribute("aria-pressed") === "true"; })[0];
     if (!picked) { document.getElementById("verdict").innerHTML = '<div class="verdict">Сначала выбери вариант.</div>'; return; }
     answered = true;
     stats.tries++;
-    var ok = picked._ok;
-    if (ok) { stats.solved++; }
+    var okc = picked._ok;
+    if (okc) { stats.solved++; }
     choiceEls.forEach(function (b) {
       if (b._ok) { b.classList.add("correct"); }
       else if (b === picked) { b.classList.add("wrong"); }
     });
     document.getElementById("score").textContent = "решено: " + stats.solved + " · попыток: " + stats.tries;
-    document.getElementById("verdict").innerHTML = '<div class="verdict ' + (ok ? "ok" : "bad") + '"><h4>' +
-      (ok ? "Верно" : "Не то") + '</h4><p>' + task.explain + '</p></div>';
+    document.getElementById("verdict").innerHTML = '<div class="verdict ' + (okc ? "ok" : "bad") + '"><h4>' +
+      (okc ? "Верно" : "Не то") + '</h4><p>' + task.explain + '</p></div>';
+  }
+
+  function showModel() {
+    if (!task || !task.model) { return; }
+    if (document.getElementById("model-block")) { return; }
+    var pre = document.createElement("pre");
+    pre.className = "model"; pre.id = "model-block";
+    pre.textContent = "Эталон (один из вариантов):\n\n" + task.model;
+    document.getElementById("verdict").appendChild(pre);
   }
 
   var lastKey = null;
@@ -480,6 +628,7 @@
 
   document.getElementById("next").addEventListener("click", nextTask);
   document.getElementById("check").addEventListener("click", check);
+  document.getElementById("model").addEventListener("click", showModel);
   document.getElementById("sys").addEventListener("change", nextTask);
   document.getElementById("diff").addEventListener("change", nextTask);
   document.getElementById("theme").addEventListener("click", function () {
