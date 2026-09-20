@@ -1,0 +1,11 @@
+<group name="local,audit,">
+  <rule id="100100" level="12">
+    <if_group>audit</if_group>
+    <field name="audit.key">shadow_read</field>
+    <description>Чтение файла паролей /etc/shadow: возможна кража хэшей</description>
+    <mitre>
+      <id>T1003.008</id>
+    </mitre>
+    <group>authentication_failures,pci_dss_10.2.1,</group>
+  </rule>
+</group>

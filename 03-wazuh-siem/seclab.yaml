@@ -1,0 +1,30 @@
+# Виртуальная машина лаборатории: Wazuh (SIEM/XDR) + Suricata (IDS) + Grafana
+# Запуск:  limactl start --name=seclab ~/SecLab/seclab.yaml
+# Вход:    limactl shell seclab
+# Удалить: limactl delete -f seclab
+
+vmType: "vz"
+rosetta:
+  enabled: false
+
+cpus: 4
+memory: "6GiB"
+disk: "40GiB"
+
+images:
+  - location: "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-arm64.img"
+    arch: "aarch64"
+
+mounts:
+  - location: "~/SecLab"
+    writable: true
+
+# Порты, которые будут доступны на Mac по адресу localhost
+portForwards:
+  - guestPort: 443          # веб-интерфейс Wazuh
+    hostPort: 8443
+  - guestPort: 3000         # Grafana
+    hostPort: 3000
+
+networks:
+  - lima: user-v2           # сеть для агентов со второго Mac

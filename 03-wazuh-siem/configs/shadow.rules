@@ -1,0 +1,1 @@
+-w /etc/shadow -p r -k shadow_read

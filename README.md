@@ -26,6 +26,7 @@ WAF, межсетевых экранов, IDS/IPS, SIEM, NGFW и антивир�
 
 | № | Тема | Инструменты | Статус |
 |---|---|---|---|
+| 03 | [Wazuh: SIEM и обнаружение атак на хостах](03-wazuh-siem/) | Wazuh, Suricata, Lima ВМ | ✅ Выполнена |
 | 01 | [WAF: защита веб-приложения от SQLi и XSS](01-waf-modsecurity/) | Docker, DVWA, ModSecurity, OWASP CRS | ✅ Выполнена |
 | 02 | [Сеть офиса: VLAN и маршрутизация между VLAN](02-network-vlan/) | Cisco Packet Tracer | 🔄 В работе |
 | 03 | Отказоустойчивость сети: STP, EtherChannel, HSRP | Cisco Packet Tracer | ⏳ |
