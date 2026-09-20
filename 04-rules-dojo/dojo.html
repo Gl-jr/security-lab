@@ -1,0 +1,493 @@
+<title>Дожо правил безопасности</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    --bg: #eef1ee; --surface: #ffffff; --surface-2: #f6f8f6; --line: #d3dbd6;
+    --ink: #14201c; --muted: #5c6b64; --accent: #0d6e64; --accent-soft: #d9ece9;
+    --ok: #16794f; --bad: #b3261e; --warn: #a9560a; --pick: #0f62c4;
+    --code-bg: #10201c; --code-ink: #cfe8e0;
+    --radius: 10px;
+    --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0d1412; --surface: #141d1a; --surface-2: #19241f; --line: #27352f;
+      --ink: #e4ece8; --muted: #94a69e; --accent: #38c2ae; --accent-soft: #14312c;
+      --ok: #4cc38a; --bad: #f26d63; --warn: #e09a4e; --pick: #6aa8f5;
+      --code-bg: #0a1210; --code-ink: #cfe8e0;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0d1412; --surface: #141d1a; --surface-2: #19241f; --line: #27352f;
+    --ink: #e4ece8; --muted: #94a69e; --accent: #38c2ae; --accent-soft: #14312c;
+    --ok: #4cc38a; --bad: #f26d63; --warn: #e09a4e; --pick: #6aa8f5;
+    --code-bg: #0a1210; --code-ink: #cfe8e0;
+  }
+
+  body { background: var(--bg); color: var(--ink); font-family: var(--font-sans); font-size: 15px; line-height: 1.55; margin: 0; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding-inline: 16px; padding-block: 26px 56px; }
+  header.top { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: flex-end; justify-content: space-between; margin-bottom: 16px; }
+  .eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 0 0 4px; }
+  h1 { font-size: clamp(23px, 4vw, 32px); line-height: 1.12; margin: 0; font-weight: 700; letter-spacing: -.015em; text-wrap: balance; }
+  .sub { color: var(--muted); margin: 8px 0 0; max-width: 64ch; }
+  .btn { font-family: var(--font-sans); font-size: 13.5px; font-weight: 500; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 8px 13px; cursor: pointer; }
+  .btn:hover { border-color: var(--accent); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  :root[data-theme="dark"] .btn.primary, :root:not([data-theme="light"]) .btn.primary { color: #06120f; }
+  .btn:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  select { font-family: var(--font-mono); font-size: 13px; padding: 8px 9px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 18px; }
+  .bar .mono { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+  .score { margin-left: auto; font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); }
+
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
+  .chip { font-family: var(--font-mono); font-size: 11px; letter-spacing: .04em; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); color: var(--muted); }
+  .chip.sys { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); }
+  .chip.diff-easy { color: var(--ok); }
+  .chip.diff-medium { color: var(--warn); }
+  .chip.diff-hard { color: var(--bad); }
+  .chip.type { color: var(--pick); }
+
+  .q-text { font-size: 17px; font-weight: 600; margin: 0 0 6px; line-height: 1.35; text-wrap: balance; }
+  .q-scenario { color: var(--muted); font-size: 14px; margin: 0 0 14px; }
+
+  pre.code { background: var(--code-bg); color: var(--code-ink); font-family: var(--font-mono); font-size: 13px; line-height: 1.5; padding: 14px; border-radius: 8px; overflow-x: auto; margin: 0 0 16px; white-space: pre; }
+  pre.code .blank { color: var(--warn); font-weight: 600; }
+  pre.code .hl { color: #ffd479; }
+
+  .choices { display: flex; flex-direction: column; gap: 8px; margin: 0 0 14px; }
+  .choices button { text-align: left; font-family: var(--font-mono); font-size: 13.5px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); padding: 11px 13px; cursor: pointer; line-height: 1.45; }
+  .choices button:hover { border-color: var(--accent); }
+  .choices button[aria-pressed="true"] { border-color: var(--pick); box-shadow: inset 0 0 0 1px var(--pick); }
+  .choices button.correct { border-color: var(--ok); background: color-mix(in srgb, var(--ok) 12%, var(--surface-2)); }
+  .choices button.wrong { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 12%, var(--surface-2)); }
+
+  .verdict { border-radius: 8px; padding: 13px 15px; font-size: 14px; margin-top: 4px; border: 1px solid var(--line); background: var(--surface-2); line-height: 1.5; }
+  .verdict.ok { border-color: color-mix(in srgb, var(--ok) 45%, var(--line)); }
+  .verdict.bad { border-color: color-mix(in srgb, var(--bad) 45%, var(--line)); }
+  .verdict h4 { margin: 0 0 6px; font-size: 14.5px; }
+  .verdict.ok h4 { color: var(--ok); }
+  .verdict.bad h4 { color: var(--bad); }
+  .verdict b { font-weight: 600; }
+  .verdict code { font-family: var(--font-mono); font-size: .92em; background: var(--code-bg); color: var(--code-ink); padding: 1px 5px; border-radius: 4px; }
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+
+  details.ref { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 14px; }
+  details.ref summary { cursor: pointer; font-family: var(--font-mono); font-size: 13px; color: var(--muted); }
+  .ref-body { margin-top: 12px; }
+  .ref-group { margin-bottom: 16px; }
+  .ref-group h4 { margin: 0 0 6px; font-size: 12px; font-family: var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+  .ref-group table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .ref-group td { padding: 4px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .ref-group td:first-child { font-family: var(--font-mono); white-space: nowrap; color: var(--ink); width: 40%; }
+  .ref-group td:last-child { color: var(--muted); }
+  .foot { margin-top: 24px; color: var(--muted); font-size: 13px; max-width: 74ch; }
+  a { color: var(--accent); }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Практикум · правила защиты</p>
+      <h1>Дожо правил безопасности</h1>
+      <p class="sub">Читай, собирай, чини и дополняй правила для Suricata, межсетевых экранов Linux и MikroTik, списков доступа Cisco и WAF. Разные задачи, три уровня сложности, справочник под рукой.</p>
+    </div>
+    <button class="btn" id="theme" type="button">Сменить тему</button>
+  </header>
+
+  <div class="bar">
+    <label class="mono" for="sys">система</label>
+    <select id="sys">
+      <option value="any">все</option>
+      <option value="suricata">Suricata (IDS)</option>
+      <option value="nft">Firewall Linux (nftables)</option>
+      <option value="cisco">Cisco ACL</option>
+      <option value="mikrotik">MikroTik</option>
+      <option value="waf">WAF (ModSecurity)</option>
+    </select>
+    <label class="mono" for="diff">сложность</label>
+    <select id="diff">
+      <option value="any">любая</option>
+      <option value="easy">лёгкий</option>
+      <option value="medium">средний</option>
+      <option value="hard">сложный</option>
+    </select>
+    <button class="btn primary" id="next" type="button">Следующее задание</button>
+    <span class="score" id="score">решено: 0 · попыток: 0</span>
+  </div>
+
+  <div class="card">
+    <div class="meta" id="meta"></div>
+    <p class="q-text" id="q-text">Нажми «Следующее задание».</p>
+    <p class="q-scenario" id="q-scenario"></p>
+    <div id="code-slot"></div>
+    <div class="choices" id="choices"></div>
+    <button class="btn primary" id="check" type="button">Проверить</button>
+    <div id="verdict"></div>
+
+    <details class="ref">
+      <summary>Справочник: ключевые слова и где читать в жизни</summary>
+      <div class="ref-body" id="ref-body"></div>
+    </details>
+  </div>
+
+  <p class="foot">Правила не изобретают — их собирают из фиксированного словаря ключевых слов, который документирован. В реальной работе большинство правил скачивают готовыми наборами (ET Open для Suricata) и дописывают своё только под конкретную задачу. Навык — не помнить всё наизусть, а уметь открыть документацию и найти нужное.</p>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  function shuffle(a) { return a.slice().sort(function () { return Math.random() - 0.5; }); }
+  function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+  var SYS_LABEL = {
+    suricata: "Suricata", nft: "Firewall Linux", cisco: "Cisco ACL",
+    mikrotik: "MikroTik", waf: "WAF ModSecurity"
+  };
+  var TYPE_LABEL = { read: "прочитай правило", build: "выбери верное", fix: "найди ошибку", fill: "дополни" };
+  var DIFF_LABEL = { easy: "лёгкий", medium: "средний", hard: "сложный" };
+
+  // Банк заданий. Каждое: sys, diff, type, q(вопрос), scenario, code(опц.), choices[{t,ok}], explain
+  var BANK = [
+    // ---------- SURICATA ----------
+    { sys: "suricata", diff: "easy", type: "read",
+      q: "Что делает это правило Suricata?",
+      code: 'alert icmp any any -> $HOME_NET any (msg:"ICMP ping"; itype:8; sid:1000001;)',
+      choices: [
+        { t: "Поднимает тревогу, когда кто-то пингует машины нашей сети", ok: true },
+        { t: "Блокирует весь ping в сети", ok: false },
+        { t: "Разрешает ping только из нашей сети", ok: false },
+        { t: "Записывает все TCP-соединения", ok: false }
+      ],
+      explain: "alert = только тревога (не блокировка). icmp + itype:8 = ping-запрос. Направление -> $HOME_NET = в сторону нашей сети. Suricata в режиме IDS не блокирует, а сигналит." },
+
+    { sys: "suricata", diff: "easy", type: "read",
+      q: "На порт какой службы срабатывает это правило?",
+      code: 'alert tcp any any -> $HOME_NET 22 (msg:"SSH contact"; sid:1000005;)',
+      choices: [
+        { t: "SSH (порт 22)", ok: true },
+        { t: "HTTPS (порт 443)", ok: false },
+        { t: "RDP (порт 3389)", ok: false },
+        { t: "любой порт", ok: false }
+      ],
+      explain: "Число после $HOME_NET — это порт назначения. 22 — стандартный порт SSH. Так ловят попытки достучаться до удалённого управления." },
+
+    { sys: "suricata", diff: "medium", type: "fill",
+      q: "Нужно ловить попытки скачать файл с расширением .exe через HTTP. Какое ключевое слово ищет текст внутри трафика?",
+      code: 'alert http any any -> any any (msg:"EXE download"; ____:".exe"; sid:1000010;)',
+      choices: [
+        { t: "content", ok: true },
+        { t: "itype", ok: false },
+        { t: "flags", ok: false },
+        { t: "threshold", ok: false }
+      ],
+      explain: "content:\".exe\" ищет эти байты/буквы внутри потока данных — этого не умеет обычный фаервол. itype — для ICMP, flags — для TCP-флагов, threshold — для порога срабатывания." },
+
+    { sys: "suricata", diff: "medium", type: "read",
+      q: "Зачем в этом правиле threshold?",
+      code: 'alert tcp any any -> $HOME_NET 22 (msg:"SSH scan"; flags:S; threshold:type both, track by_src, count 5, seconds 60; sid:1000002;)',
+      choices: [
+        { t: "Сработать только если 5+ попыток за 60 секунд с одного адреса — это отсекает случайные подключения", ok: true },
+        { t: "Ограничить скорость SSH до 5 Мбит", ok: false },
+        { t: "Разрешить только 5 подключений в минуту", ok: false },
+        { t: "Блокировать адрес на 60 секунд", ok: false }
+      ],
+      explain: "threshold превращает «одну попытку» в «серию». count 5, seconds 60, track by_src = сработать, если с одного источника 5+ SYN-пакетов за минуту. Это признак сканирования, а не обычного входа. Тот же принцип корреляции, что в Wazuh (5710 → 5712)." },
+
+    { sys: "suricata", diff: "hard", type: "fix",
+      q: "В этом правиле ошибка. Какая?",
+      code: 'alert tcp any any -> $HOME_NET 80 (msg:"test")',
+      choices: [
+        { t: "Нет обязательного sid (номер правила) — Suricata не загрузит правило", ok: true },
+        { t: "Порт 80 нельзя указывать", ok: false },
+        { t: "msg должен быть на английском", ok: false },
+        { t: "После alert должен идти udp, а не tcp", ok: false }
+      ],
+      explain: "У каждого правила Suricata обязателен sid (signature id) — уникальный номер. Без него правило не загружается. Свои правила нумеруют от 1000000. Правильно: (msg:\"test\"; sid:1000099;)" },
+
+    { sys: "suricata", diff: "hard", type: "read",
+      q: "Что именно ловит это боевое правило из набора ET Open?",
+      code: 'alert dns $HOME_NET any -> any any (msg:"Suspicious .top domain"; dns.query; content:".top"; endswith; sid:2027758;)',
+      choices: [
+        { t: "DNS-запросы из нашей сети к доменам, заканчивающимся на .top — их часто используют вредоносы", ok: true },
+        { t: "Блокирует все сайты в зоне .top", ok: false },
+        { t: "Ловит входящие DNS-ответы", ok: false },
+        { t: "Проверяет скорость DNS", ok: false }
+      ],
+      explain: "dns.query + content:\".top\" + endswith = запрос к домену, оканчивающемуся на .top. Направление из $HOME_NET наружу = наш заражённый компьютер зовёт управляющий сервер. Дешёвые домены .top популярны у злоумышленников. sid 2027758 — из набора ET Open (не мы писали)." },
+
+    // ---------- NFTABLES ----------
+    { sys: "nft", diff: "easy", type: "read",
+      q: "Что означает эта строка политики межсетевого экрана?",
+      code: 'type filter hook input priority 0; policy drop;',
+      choices: [
+        { t: "По умолчанию весь входящий трафик запрещён (default deny), разрешения добавляют отдельно", ok: true },
+        { t: "Разрешить весь входящий трафик", ok: false },
+        { t: "Удалить все правила", ok: false },
+        { t: "Логировать каждый пакет", ok: false }
+      ],
+      explain: "policy drop = базовое поведение цепочки «отбросить». Всё, что не разрешено явными правилами выше, молча падает. Это принцип «запрещено всё, что не разрешено» — основа безопасной настройки." },
+
+    { sys: "nft", diff: "medium", type: "read",
+      q: "Кому эта строка разрешает доступ по SSH?",
+      code: 'tcp dport 22 ip saddr 192.168.99.0/24 accept',
+      choices: [
+        { t: "Только адресам из сети 192.168.99.0/24 (сеть управления)", ok: true },
+        { t: "Всем без исключения", ok: false },
+        { t: "Только одному адресу 192.168.99.0", ok: false },
+        { t: "Никому, это запрещающее правило", ok: false }
+      ],
+      explain: "dport 22 = порт назначения SSH. saddr 192.168.99.0/24 = источник только из этой подсети. accept = разрешить. Так SSH открывают лишь для сети администраторов, а не для всех — важная мера защиты." },
+
+    { sys: "nft", diff: "medium", type: "read",
+      q: "Зачем нужна эта строка и почему она обычно идёт первой?",
+      code: 'ct state established,related accept',
+      choices: [
+        { t: "Пропускает ответы на уже установленные нами соединения — без неё сломался бы ответный трафик", ok: true },
+        { t: "Устанавливает новые соединения с интернетом", ok: false },
+        { t: "Блокирует установленные соединения", ok: false },
+        { t: "Очищает таблицу соединений", ok: false }
+      ],
+      explain: "ct state (connection tracking) — это stateful-фильтрация. established,related = трафик уже разрешённых соединений и связанный с ними. Правило в начале, чтобы ответы (например, страница сайта в ответ на твой запрос) проходили автоматически, без отдельного правила на каждый." },
+
+    { sys: "nft", diff: "hard", type: "fix",
+      q: "Порядок правил важен. Что не так с этой цепочкой?",
+      scenario: "Цель: пустить веб всем, но SSH только из сети управления.",
+      code: 'chain input {\n  policy drop;\n  accept                       # ← строка 1\n  tcp dport 22 ip saddr 192.168.99.0/24 accept\n}',
+      choices: [
+        { t: "Первая строка accept пропускает ВСЁ, и правила ниже уже не работают — дыра в защите", ok: true },
+        { t: "SSH-правило должно быть выше accept", ok: false },
+        { t: "policy drop нужно убрать", ok: false },
+        { t: "Порт 22 указан неверно", ok: false }
+      ],
+      explain: "Правила читаются сверху вниз до первого совпадения. Голое accept в начале разрешает весь трафик, и до ограничения SSH дело не доходит. Это классическая ошибка: слишком широкое разрешающее правило вверху обесценивает всё под ним." },
+
+    // ---------- CISCO ACL ----------
+    { sys: "cisco", diff: "medium", type: "read",
+      q: "Что делает этот список доступа Cisco?",
+      code: 'access-list 110 deny ip 192.168.30.0 0.0.0.255 192.168.10.0 0.0.0.255\naccess-list 110 permit ip any any',
+      choices: [
+        { t: "Запрещает сети 192.168.30.0/24 доступ к сети 192.168.10.0/24, остальное разрешает", ok: true },
+        { t: "Разрешает всё между этими сетями", ok: false },
+        { t: "Блокирует весь трафик в сети", ok: false },
+        { t: "Разрешает только сеть 30 к сети 10", ok: false }
+      ],
+      explain: "Первая строка запрещает трафик из сети 30 в сеть 10 (например, гости к бухгалтерии). Вторая — permit any any — разрешает всё остальное. 0.0.0.255 — это wildcard-маска Cisco (обратная обычной, /24). Без permit в конце сработал бы неявный «запретить всё»." },
+
+    { sys: "cisco", diff: "hard", type: "read",
+      q: "Почему в списке Cisco почти всегда есть явное permit в конце, если что-то запрещаешь?",
+      code: 'access-list 110 deny tcp any host 10.0.0.5 eq 23\naccess-list 110 permit ip any any',
+      choices: [
+        { t: "В конце любого ACL есть невидимый «deny all» — без явного permit заблокируется вообще весь трафик", ok: true },
+        { t: "permit ускоряет обработку", ok: false },
+        { t: "Так требует лицензия Cisco", ok: false },
+        { t: "Без него не сохранится конфигурация", ok: false }
+      ],
+      explain: "В конце каждого ACL Cisco стоит неявное «deny any any», которого не видно. Если написать только deny-правило и забыть permit, весь остальной трафик молча заблокируется. Это частая причина «я запретил один порт, а легла вся сеть»." },
+
+    // ---------- MIKROTIK ----------
+    { sys: "mikrotik", diff: "medium", type: "read",
+      q: "Что делает это правило фаервола MikroTik?",
+      code: '/ip firewall filter\nadd chain=input protocol=tcp dst-port=8291 src-address=192.168.88.0/24 action=accept',
+      choices: [
+        { t: "Разрешает доступ к управлению роутером (WinBox, порт 8291) только из локальной сети", ok: true },
+        { t: "Открывает порт 8291 всему интернету", ok: false },
+        { t: "Блокирует WinBox полностью", ok: false },
+        { t: "Пробрасывает порт на другой сервер", ok: false }
+      ],
+      explain: "chain=input = трафик на сам роутер. dst-port=8291 = порт WinBox (управление MikroTik). src-address ограничивает источник локальной сетью. Так закрывают управление роутером от доступа из интернета — базовая мера, MikroTik часто взламывают через открытый наружу WinBox." },
+
+    { sys: "mikrotik", diff: "hard", type: "fill",
+      q: "Нужно в конце цепочки input запретить всё, что не разрешено выше (default deny). Какое действие подставить?",
+      code: '/ip firewall filter\nadd chain=input action=____',
+      choices: [
+        { t: "drop", ok: true },
+        { t: "accept", ok: false },
+        { t: "log", ok: false },
+        { t: "passthrough", ok: false }
+      ],
+      explain: "action=drop молча отбрасывает. Правило без других условий в конце цепочки = «запретить всё остальное». В отличие от Cisco, у MikroTik нет неявного deny в конце — если его не добавить, всё будет разрешено. Это надо помнить." },
+
+    { sys: "mikrotik", diff: "easy", type: "read",
+      q: "На что влияет chain=input в правиле MikroTik?",
+      code: 'add chain=input protocol=icmp action=accept',
+      choices: [
+        { t: "На трафик, адресованный самому роутеру (input = входящий на устройство)", ok: true },
+        { t: "На трафик, который проходит через роутер насквозь", ok: false },
+        { t: "На исходящий трафик роутера", ok: false },
+        { t: "На все интерфейсы сразу", ok: false }
+      ],
+      explain: "В MikroTik три основные цепочки: input (трафик К роутеру), forward (СКВОЗЬ роутер, между сетями), output (ОТ роутера). Путать их — частая ошибка: правило в input не влияет на трафик между твоими сетями, для этого нужен forward." },
+
+    // ---------- WAF ModSecurity ----------
+    { sys: "waf", diff: "medium", type: "read",
+      q: "Что делает это правило WAF (ModSecurity)?",
+      code: 'SecRule ARGS "@rx (?i)union.*select" \\\n  "id:1001,phase:2,deny,status:403,msg:\'SQL Injection\'"',
+      choices: [
+        { t: "Блокирует запрос (403), если в параметрах есть признак SQL-инъекции union select", ok: true },
+        { t: "Разрешает запросы с union select", ok: false },
+        { t: "Логирует все запросы к базе данных", ok: false },
+        { t: "Шифрует параметры запроса", ok: false }
+      ],
+      explain: "SecRule ARGS = проверяем параметры запроса. @rx (?i)union.*select = регулярное выражение, ищет union...select без учёта регистра. deny,status:403 = заблокировать с кодом 403. Это ручной аналог того, что делает набор OWASP CRS из лабы 01." },
+
+    { sys: "waf", diff: "hard", type: "read",
+      q: "Чем phase:2 отличается от phase:1 в правиле WAF?",
+      code: 'SecRule REQUEST_BODY "@contains <script>" "id:1002,phase:2,deny"',
+      choices: [
+        { t: "phase:2 проверяет тело запроса (например, данные формы), phase:1 — только заголовки", ok: true },
+        { t: "phase:2 работает в два раза быстрее", ok: false },
+        { t: "phase:2 проверяет ответ сервера", ok: false },
+        { t: "Разницы нет", ok: false }
+      ],
+      explain: "ModSecurity обрабатывает запрос по фазам: 1 — заголовки запроса, 2 — тело запроса (формы, JSON), 3 — заголовки ответа, 4 — тело ответа. REQUEST_BODY доступно только с phase:2. Выбор фазы = на каком этапе смотреть." },
+
+    { sys: "waf", diff: "easy", type: "read",
+      q: "Что означает часть deny,status:403 в правиле WAF?",
+      code: 'SecRule ARGS "@rx <script>" "id:1003,phase:2,deny,status:403,msg:\'XSS\'"',
+      choices: [
+        { t: "Заблокировать запрос и вернуть ошибку 403 Forbidden", ok: true },
+        { t: "Пропустить запрос и записать в журнал", ok: false },
+        { t: "Перенаправить на другую страницу", ok: false },
+        { t: "Замедлить запрос на 403 мс", ok: false }
+      ],
+      explain: "deny = заблокировать, status:403 = какой код вернуть браузеру. Помнишь режимы из лабы 01? deny — это режим блокировки (On). Если заменить на pass, правило только запишет в журнал — это режим DetectionOnly." }
+  ];
+
+  var REF = [
+    ["Suricata — структура правила", [
+      ["действие протокол откуда -> куда (опции)", "общий скелет любого правила"],
+      ["alert / drop / pass", "тревога / блокировать (IPS) / пропустить"],
+      ["msg:\"...\"", "текст тревоги"],
+      ["sid:1000001;", "обязательный номер, свои от 1000000"],
+      ["content:\"текст\"", "искать байты/буквы внутри трафика"],
+      ["itype:8", "тип ICMP (8 = ping-запрос)"],
+      ["flags:S", "TCP-флаг SYN (начало соединения)"],
+      ["threshold: count N, seconds T", "сработать при N событиях за T секунд"],
+      ["документация", "docs.suricata.io → Suricata Rules"]
+    ]],
+    ["nftables (Linux firewall)", [
+      ["policy drop", "по умолчанию всё запретить (default deny)"],
+      ["ct state established,related accept", "пропускать ответы на свои соединения"],
+      ["tcp dport 22 ... accept", "разрешить по порту назначения"],
+      ["ip saddr 192.168.99.0/24", "ограничить источник подсетью"],
+      ["порядок правил", "сверху вниз, до первого совпадения"],
+      ["документация", "man nftables, nftables.org/wiki"]
+    ]],
+    ["Cisco ACL", [
+      ["access-list N permit/deny ...", "разрешить/запретить"],
+      ["0.0.0.255", "wildcard-маска (обратная /24)"],
+      ["неявный deny any any", "в конце ACL всё запрещено по умолчанию"],
+      ["ip access-group N in", "применить ACL на интерфейс"],
+      ["документация", "Cisco IOS Security Command Reference"]
+    ]],
+    ["MikroTik", [
+      ["chain=input", "трафик К роутеру"],
+      ["chain=forward", "трафик СКВОЗЬ роутер (между сетями)"],
+      ["action=accept/drop", "разрешить/запретить"],
+      ["нет неявного deny", "финальный drop добавляют вручную"],
+      ["документация", "help.mikrotik.com → Firewall"]
+    ]],
+    ["WAF ModSecurity", [
+      ["SecRule ЦЕЛЬ \"оператор\" \"действия\"", "скелет правила"],
+      ["ARGS / REQUEST_BODY / REQUEST_HEADERS", "что проверять"],
+      ["@rx ...", "регулярное выражение"],
+      ["phase:1..4", "заголовки/тело запроса/ответа"],
+      ["deny,status:403 / pass", "блок / только журнал (DetectionOnly)"],
+      ["документация", "OWASP CRS, ModSecurity Reference Manual"]
+    ]]
+  ];
+
+  var task = null, answered = false, stats = { solved: 0, tries: 0 }, choiceEls = [];
+
+  function pool() {
+    var sys = document.getElementById("sys").value, diff = document.getElementById("diff").value;
+    return BANK.filter(function (t) {
+      return (sys === "any" || t.sys === sys) && (diff === "any" || t.diff === diff);
+    });
+  }
+
+  function render() {
+    answered = false;
+    document.getElementById("verdict").innerHTML = "";
+    var meta = '<span class="chip sys">' + SYS_LABEL[task.sys] + '</span>' +
+      '<span class="chip diff-' + task.diff + '">' + DIFF_LABEL[task.diff] + '</span>' +
+      '<span class="chip type">' + TYPE_LABEL[task.type] + '</span>';
+    document.getElementById("meta").innerHTML = meta;
+    document.getElementById("q-text").textContent = task.q;
+    document.getElementById("q-scenario").textContent = task.scenario || "";
+    document.getElementById("q-scenario").style.display = task.scenario ? "block" : "none";
+    document.getElementById("code-slot").innerHTML = task.code ? '<pre class="code">' + esc(task.code).replace(/____/g, '<span class="blank">____</span>') + '</pre>' : "";
+
+    var order = shuffle(task.choices);
+    choiceEls = [];
+    var box = document.getElementById("choices");
+    box.innerHTML = "";
+    order.forEach(function (c) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.textContent = c.t;
+      b.setAttribute("aria-pressed", "false");
+      b._ok = c.ok;
+      b.addEventListener("click", function () {
+        if (answered) { return; }
+        choiceEls.forEach(function (x) { x.setAttribute("aria-pressed", "false"); });
+        b.setAttribute("aria-pressed", "true");
+      });
+      box.appendChild(b);
+      choiceEls.push(b);
+    });
+  }
+
+  function check() {
+    if (!task || answered) { return; }
+    var picked = choiceEls.filter(function (b) { return b.getAttribute("aria-pressed") === "true"; })[0];
+    if (!picked) { document.getElementById("verdict").innerHTML = '<div class="verdict">Сначала выбери вариант.</div>'; return; }
+    answered = true;
+    stats.tries++;
+    var ok = picked._ok;
+    if (ok) { stats.solved++; }
+    choiceEls.forEach(function (b) {
+      if (b._ok) { b.classList.add("correct"); }
+      else if (b === picked) { b.classList.add("wrong"); }
+    });
+    document.getElementById("score").textContent = "решено: " + stats.solved + " · попыток: " + stats.tries;
+    document.getElementById("verdict").innerHTML = '<div class="verdict ' + (ok ? "ok" : "bad") + '"><h4>' +
+      (ok ? "Верно" : "Не то") + '</h4><p>' + task.explain + '</p></div>';
+  }
+
+  var lastKey = null;
+  function nextTask() {
+    var p = pool();
+    if (!p.length) { document.getElementById("q-text").textContent = "Нет заданий с такими фильтрами — измени систему или сложность."; document.getElementById("choices").innerHTML = ""; document.getElementById("code-slot").innerHTML = ""; document.getElementById("meta").innerHTML = ""; return; }
+    var fresh = p.filter(function (t) { return (t.sys + t.q) !== lastKey; });
+    task = (fresh.length ? fresh : p)[Math.floor(Math.random() * (fresh.length ? fresh.length : p.length))];
+    lastKey = task.sys + task.q;
+    render();
+  }
+
+  document.getElementById("ref-body").innerHTML = REF.map(function (g) {
+    return '<div class="ref-group"><h4>' + g[0] + '</h4><table>' + g[1].map(function (r) {
+      return '<tr><td>' + esc(r[0]) + '</td><td>' + r[1] + '</td></tr>';
+    }).join("") + '</table></div>';
+  }).join("");
+
+  document.getElementById("next").addEventListener("click", nextTask);
+  document.getElementById("check").addEventListener("click", check);
+  document.getElementById("sys").addEventListener("change", nextTask);
+  document.getElementById("diff").addEventListener("change", nextTask);
+  document.getElementById("theme").addEventListener("click", function () {
+    var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    var c = document.documentElement.getAttribute("data-theme") || (prefersDark ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", c === "dark" ? "light" : "dark");
+  });
+
+  nextTask();
+})();
+</script>
