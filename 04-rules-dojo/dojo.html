@@ -79,6 +79,8 @@
   textarea.answer { width: 100%; box-sizing: border-box; min-height: 92px; resize: vertical; font-family: var(--font-mono); font-size: 13px; line-height: 1.5; padding: 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--code-bg); color: var(--code-ink); margin: 0 0 12px; }
   textarea.answer:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   .write-hint { font-family: var(--font-mono); font-size: 12px; color: var(--muted); margin: 0 0 10px; }
+  .hint-box { margin-top: 12px; padding: 12px 14px; border-left: 3px solid var(--warn); background: color-mix(in srgb, var(--warn) 10%, var(--surface-2)); border-radius: 0 6px 6px 0; font-size: 13.5px; line-height: 1.5; }
+  .hint-box b { font-weight: 600; }
   pre.model { background: var(--code-bg); color: var(--code-ink); font-family: var(--font-mono); font-size: 13px; line-height: 1.5; padding: 12px; border-radius: 8px; overflow-x: auto; margin: 10px 0 0; white-space: pre; border: 1px dashed var(--accent); }
 
   details.ref { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 14px; }
@@ -134,8 +136,10 @@
     <div id="write-slot"></div>
     <div class="controls">
       <button class="btn primary" id="check" type="button">Проверить</button>
+      <button class="btn" id="hint" type="button">💡 Подсказка</button>
       <button class="btn" id="model" type="button" hidden>Показать эталон</button>
     </div>
+    <div id="hint-slot"></div>
     <div id="verdict"></div>
 
     <details class="ref">
@@ -185,6 +189,7 @@
     // ---------- SURICATA ----------
     { sys: "suricata", diff: "easy", type: "read",
       q: "Что делает это правило Suricata?",
+      hint: "Смотри на первое слово (alert = что делает) и на itype:8 — это тип ICMP. Направление -> указывает, КУДА идёт трафик.",
       code: 'alert icmp any any -> $HOME_NET any (msg:"ICMP ping"; itype:8; sid:1000001;)',
       choices: [
         { t: "Поднимает тревогу, когда кто-то пингует машины нашей сети", ok: true },
@@ -196,6 +201,7 @@
 
     { sys: "suricata", diff: "easy", type: "read",
       q: "На порт какой службы срабатывает это правило?",
+      hint: "Число после $HOME_NET — это порт назначения. Вспомни: 22 = SSH, 443 = HTTPS, 3389 = RDP.",
       code: 'alert tcp any any -> $HOME_NET 22 (msg:"SSH contact"; sid:1000005;)',
       choices: [
         { t: "SSH (порт 22)", ok: true },
@@ -207,6 +213,7 @@
 
     { sys: "suricata", diff: "medium", type: "fill",
       q: "Нужно ловить попытки скачать файл с расширением .exe через HTTP. Какое ключевое слово ищет текст внутри трафика?",
+      hint: "Ищем ТЕКСТ внутри трафика. Из списка: itype — про ICMP, flags — про TCP, threshold — про порог. Осталось одно.",
       code: 'alert http any any -> any any (msg:"EXE download"; ____:".exe"; sid:1000010;)',
       choices: [
         { t: "content", ok: true },
@@ -218,6 +225,7 @@
 
     { sys: "suricata", diff: "medium", type: "read",
       q: "Зачем в этом правиле threshold?",
+      hint: "threshold считает события. Посмотри на count 5 и seconds 60 — это «сколько раз за сколько секунд». Одна попытка или серия?",
       code: 'alert tcp any any -> $HOME_NET 22 (msg:"SSH scan"; flags:S; threshold:type both, track by_src, count 5, seconds 60; sid:1000002;)',
       choices: [
         { t: "Сработать только если 5+ попыток за 60 секунд с одного адреса — это отсекает случайные подключения", ok: true },
@@ -229,6 +237,7 @@
 
     { sys: "suricata", diff: "hard", type: "fix",
       q: "В этом правиле ошибка. Какая?",
+      hint: "Сравни со структурой рабочего правила из справочника. Какого обязательного элемента в скобках не хватает? Он есть в каждом правиле.",
       code: 'alert tcp any any -> $HOME_NET 80 (msg:"test")',
       choices: [
         { t: "Нет обязательного sid (номер правила) — Suricata не загрузит правило", ok: true },
@@ -240,6 +249,7 @@
 
     { sys: "suricata", diff: "hard", type: "read",
       q: "Что именно ловит это боевое правило из набора ET Open?",
+      hint: "dns.query + content + endswith. Речь про доменное имя. Направление из $HOME_NET наружу — кто кого зовёт?",
       code: 'alert dns $HOME_NET any -> any any (msg:"Suspicious .top domain"; dns.query; content:".top"; endswith; sid:2027758;)',
       choices: [
         { t: "DNS-запросы из нашей сети к доменам, заканчивающимся на .top — их часто используют вредоносы", ok: true },
@@ -252,6 +262,7 @@
     // ---------- NFTABLES ----------
     { sys: "nft", diff: "easy", type: "read",
       q: "Что означает эта строка политики межсетевого экрана?",
+      hint: "policy — это поведение ПО УМОЛЧАНИЮ. drop = отбрасывать. Значит, что происходит с трафиком, для которого нет разрешающего правила?",
       code: 'type filter hook input priority 0; policy drop;',
       choices: [
         { t: "По умолчанию весь входящий трафик запрещён (default deny), разрешения добавляют отдельно", ok: true },
@@ -263,6 +274,7 @@
 
     { sys: "nft", diff: "medium", type: "read",
       q: "Кому эта строка разрешает доступ по SSH?",
+      hint: "dport 22 = порт SSH. Ключевое — saddr (source address, источник) с маской /24. Это один адрес или подсеть?",
       code: 'tcp dport 22 ip saddr 192.168.99.0/24 accept',
       choices: [
         { t: "Только адресам из сети 192.168.99.0/24 (сеть управления)", ok: true },
@@ -274,6 +286,7 @@
 
     { sys: "nft", diff: "medium", type: "read",
       q: "Зачем нужна эта строка и почему она обычно идёт первой?",
+      hint: "ct state = отслеживание соединений (stateful). established,related = уже установленные. Подумай про ответ сайта на твой запрос.",
       code: 'ct state established,related accept',
       choices: [
         { t: "Пропускает ответы на уже установленные нами соединения — без неё сломался бы ответный трафик", ok: true },
@@ -285,6 +298,7 @@
 
     { sys: "nft", diff: "hard", type: "fix",
       q: "Порядок правил важен. Что не так с этой цепочкой?",
+      hint: "Правила читаются сверху вниз до первого совпадения. Что делает голое accept без условий, стоящее первым?",
       scenario: "Цель: пустить веб всем, но SSH только из сети управления.",
       code: 'chain input {\n  policy drop;\n  accept                       # ← строка 1\n  tcp dport 22 ip saddr 192.168.99.0/24 accept\n}',
       choices: [
@@ -298,6 +312,7 @@
     // ---------- CISCO ACL ----------
     { sys: "cisco", diff: "medium", type: "read",
       q: "Что делает этот список доступа Cisco?",
+      hint: "Разбери построчно: первая строка deny (что кому запрещает), вторая permit any any. 0.0.0.255 — это маска /24 у Cisco.",
       code: 'access-list 110 deny ip 192.168.30.0 0.0.0.255 192.168.10.0 0.0.0.255\naccess-list 110 permit ip any any',
       choices: [
         { t: "Запрещает сети 192.168.30.0/24 доступ к сети 192.168.10.0/24, остальное разрешает", ok: true },
@@ -309,6 +324,7 @@
 
     { sys: "cisco", diff: "hard", type: "read",
       q: "Почему в списке Cisco почти всегда есть явное permit в конце, если что-то запрещаешь?",
+      hint: "В конце любого ACL есть невидимое правило. Вспомни, какое именно — оно объясняет, почему без permit ляжет всё.",
       code: 'access-list 110 deny tcp any host 10.0.0.5 eq 23\naccess-list 110 permit ip any any',
       choices: [
         { t: "В конце любого ACL есть невидимый «deny all» — без явного permit заблокируется вообще весь трафик", ok: true },
@@ -321,6 +337,7 @@
     // ---------- MIKROTIK ----------
     { sys: "mikrotik", diff: "medium", type: "read",
       q: "Что делает это правило фаервола MikroTik?",
+      hint: "chain=input = трафик К роутеру. dst-port=8291 — это порт WinBox (управление). src-address ограничивает откуда.",
       code: '/ip firewall filter\nadd chain=input protocol=tcp dst-port=8291 src-address=192.168.88.0/24 action=accept',
       choices: [
         { t: "Разрешает доступ к управлению роутером (WinBox, порт 8291) только из локальной сети", ok: true },
@@ -332,6 +349,7 @@
 
     { sys: "mikrotik", diff: "hard", type: "fill",
       q: "Нужно в конце цепочки input запретить всё, что не разрешено выше (default deny). Какое действие подставить?",
+      hint: "Нужно действие, которое молча отбрасывает пакет. Из вариантов: accept разрешает, log пишет в журнал, drop — ?",
       code: '/ip firewall filter\nadd chain=input action=____',
       choices: [
         { t: "drop", ok: true },
@@ -343,6 +361,7 @@
 
     { sys: "mikrotik", diff: "easy", type: "read",
       q: "На что влияет chain=input в правиле MikroTik?",
+      hint: "В MikroTik три цепочки: input (К роутеру), forward (СКВОЗЬ роутер), output (ОТ роутера). Какая про сам роутер?",
       code: 'add chain=input protocol=icmp action=accept',
       choices: [
         { t: "На трафик, адресованный самому роутеру (input = входящий на устройство)", ok: true },
@@ -355,6 +374,7 @@
     // ---------- WAF ModSecurity ----------
     { sys: "waf", diff: "medium", type: "read",
       q: "Что делает это правило WAF (ModSecurity)?",
+      hint: "SecRule ARGS = проверяем параметры. @rx = регулярка. union.*select — признак чего? deny,status:403 — что делает при находке?",
       code: 'SecRule ARGS "@rx (?i)union.*select" \\\n  "id:1001,phase:2,deny,status:403,msg:\'SQL Injection\'"',
       choices: [
         { t: "Блокирует запрос (403), если в параметрах есть признак SQL-инъекции union select", ok: true },
@@ -366,6 +386,7 @@
 
     { sys: "waf", diff: "hard", type: "read",
       q: "Чем phase:2 отличается от phase:1 в правиле WAF?",
+      hint: "Фазы ModSecurity: 1 — заголовки запроса, 2 — тело запроса. REQUEST_BODY (тело) доступно только начиная с какой фазы?",
       code: 'SecRule REQUEST_BODY "@contains <script>" "id:1002,phase:2,deny"',
       choices: [
         { t: "phase:2 проверяет тело запроса (например, данные формы), phase:1 — только заголовки", ok: true },
@@ -377,6 +398,7 @@
 
     { sys: "waf", diff: "easy", type: "read",
       q: "Что означает часть deny,status:403 в правиле WAF?",
+      hint: "deny = действие, status:403 = код ответа браузеру. Вспомни режимы из лабы 01: deny это блокировка или журнал?",
       code: 'SecRule ARGS "@rx <script>" "id:1003,phase:2,deny,status:403,msg:\'XSS\'"',
       choices: [
         { t: "Заблокировать запрос и вернуть ошибку 403 Forbidden", ok: true },
@@ -520,6 +542,7 @@
   function render() {
     answered = false;
     document.getElementById("verdict").innerHTML = "";
+    document.getElementById("hint-slot").innerHTML = "";
     var meta = '<span class="chip sys">' + SYS_LABEL[task.sys] + '</span>' +
       '<span class="chip diff-' + task.diff + '">' + DIFF_LABEL[task.diff] + '</span>' +
       '<span class="chip type">' + TYPE_LABEL[task.type] + '</span>';
@@ -601,6 +624,16 @@
       (okc ? "Верно" : "Не то") + '</h4><p>' + task.explain + '</p></div>';
   }
 
+  function showHint() {
+    if (!task) { return; }
+    var text = task.hint || task.writeHint ||
+      "Загляни в справочник ниже — раздел «" + SYS_LABEL[task.sys] + "». Там ключевые слова для этого типа правил.";
+    document.getElementById("hint-slot").innerHTML = '<div class="hint-box"><b>💡 Подсказка:</b> ' + esc(text) + '</div>';
+    // раскрываем справочник, чтобы был под рукой
+    var ref = document.querySelector("details.ref");
+    if (ref) { ref.open = true; }
+  }
+
   function showModel() {
     if (!task || !task.model) { return; }
     if (document.getElementById("model-block")) { return; }
@@ -629,6 +662,7 @@
   document.getElementById("next").addEventListener("click", nextTask);
   document.getElementById("check").addEventListener("click", check);
   document.getElementById("model").addEventListener("click", showModel);
+  document.getElementById("hint").addEventListener("click", showHint);
   document.getElementById("sys").addEventListener("change", nextTask);
   document.getElementById("diff").addEventListener("change", nextTask);
   document.getElementById("theme").addEventListener("click", function () {
