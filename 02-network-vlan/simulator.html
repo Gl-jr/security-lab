@@ -1,202 +1,158 @@
-<title>Тренажёр VLAN</title>
+<title>Сетевой симулятор</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
 <style>
   :root {
-    --bg: #eef1ee;
-    --surface: #ffffff;
-    --surface-2: #f6f8f6;
-    --line: #d3dbd6;
-    --ink: #14201c;
-    --muted: #5c6b64;
-    --accent: #0d6e64;
-    --accent-soft: #d6ebe7;
-    --term-bg: #10201c;
-    --term-ink: #cfe8e0;
-    --term-dim: #6f9186;
-    --v10: #a9560a;
-    --v20: #0d6e64;
-    --v30: #6b3fc4;
-    --v1: #7a8880;
-    --ok: #16794f;
-    --bad: #b3261e;
+    --bg: #eef1ee; --surface: #ffffff; --surface-2: #f6f8f6; --line: #d3dbd6;
+    --ink: #14201c; --muted: #5c6b64; --accent: #0d6e64; --accent-soft: #d9ece9;
+    --ok: #16794f; --bad: #b3261e; --warn: #a9560a; --pick: #0f62c4;
+    --term-bg: #10201c; --term-ink: #cfe8e0; --term-dim: #6f9186;
+    --v10: #a9560a; --v20: #0d6e64; --v30: #6b3fc4; --v99: #0f62c4; --v1: #7a8880;
     --radius: 10px;
     --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
     --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #0d1412;
-      --surface: #141d1a;
-      --surface-2: #19241f;
-      --line: #27352f;
-      --ink: #e4ece8;
-      --muted: #94a69e;
-      --accent: #38c2ae;
-      --accent-soft: #14312c;
-      --term-bg: #0a1210;
-      --term-ink: #cfe8e0;
-      --term-dim: #6f9186;
-      --v10: #e09a4e;
-      --v20: #38c2ae;
-      --v30: #a98bf0;
-      --v1: #7d8e86;
-      --ok: #4cc38a;
-      --bad: #f26d63;
+      --bg: #0d1412; --surface: #141d1a; --surface-2: #19241f; --line: #27352f;
+      --ink: #e4ece8; --muted: #94a69e; --accent: #38c2ae; --accent-soft: #14312c;
+      --ok: #4cc38a; --bad: #f26d63; --warn: #e09a4e; --pick: #6aa8f5;
+      --term-bg: #0a1210; --v10: #e09a4e; --v20: #38c2ae; --v30: #a98bf0; --v99: #6aa8f5; --v1: #7d8e86;
     }
   }
   :root[data-theme="dark"] {
-    --bg: #0d1412;
-    --surface: #141d1a;
-    --surface-2: #19241f;
-    --line: #27352f;
-    --ink: #e4ece8;
-    --muted: #94a69e;
-    --accent: #38c2ae;
-    --accent-soft: #14312c;
-    --term-bg: #0a1210;
-    --term-ink: #cfe8e0;
-    --term-dim: #6f9186;
-    --v10: #e09a4e;
-    --v20: #38c2ae;
-    --v30: #a98bf0;
-    --v1: #7d8e86;
-    --ok: #4cc38a;
-    --bad: #f26d63;
+    --bg: #0d1412; --surface: #141d1a; --surface-2: #19241f; --line: #27352f;
+    --ink: #e4ece8; --muted: #94a69e; --accent: #38c2ae; --accent-soft: #14312c;
+    --ok: #4cc38a; --bad: #f26d63; --warn: #e09a4e; --pick: #6aa8f5;
+    --term-bg: #0a1210; --v10: #e09a4e; --v20: #38c2ae; --v30: #a98bf0; --v99: #6aa8f5; --v1: #7d8e86;
   }
 
-  body {
-    background: var(--bg);
-    color: var(--ink);
-    font-family: var(--font-sans);
-    font-size: 15px;
-    line-height: 1.55;
-    margin: 0;
-  }
-  .wrap {
-    max-width: 1180px;
-    margin: 0 auto;
-    padding-inline: 16px;
-    padding-block: 28px 56px;
-  }
-
-  header.top { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: flex-end; justify-content: space-between; margin-bottom: 22px; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--font-sans); font-size: 15px; line-height: 1.55; margin: 0; }
+  .wrap { max-width: 1240px; margin: 0 auto; padding-inline: 16px; padding-block: 26px 56px; }
+  header.top { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: flex-end; justify-content: space-between; margin-bottom: 16px; }
   .eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 0 0 4px; }
-  h1 { font-size: clamp(24px, 4vw, 33px); line-height: 1.12; margin: 0; font-weight: 700; letter-spacing: -.015em; text-wrap: balance; }
-  .sub { color: var(--muted); margin: 6px 0 0; max-width: 62ch; }
+  h1 { font-size: clamp(23px, 4vw, 32px); line-height: 1.12; margin: 0; font-weight: 700; letter-spacing: -.015em; text-wrap: balance; }
+  .sub { color: var(--muted); margin: 8px 0 0; max-width: 62ch; }
 
-  .grid { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 18px; align-items: start; }
-  @media (max-width: 900px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 16px; }
+  .btn { font-family: var(--font-sans); font-size: 13.5px; font-weight: 500; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 8px 13px; cursor: pointer; }
+  .btn:hover { border-color: var(--accent); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  :root[data-theme="dark"] .btn.primary, :root:not([data-theme="light"]) .btn.primary { color: #06120f; }
+  .btn:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  select { font-family: var(--font-mono); font-size: 13px; padding: 8px 9px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+  .lvl-note { font-family: var(--font-mono); font-size: 12px; color: var(--muted); margin-left: auto; }
+
+  .grid { display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+  @media (max-width: 980px) { .grid { grid-template-columns: minmax(0, 1fr); } }
 
   .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
-  .panel + .panel { margin-top: 18px; }
-  .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
-  .panel-head h2 { font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; margin: 0; color: var(--muted); font-family: var(--font-mono); }
+  .panel + .panel { margin-top: 16px; }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .panel-head h2 { font-size: 12.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; margin: 0; color: var(--muted); font-family: var(--font-mono); }
   .panel-body { padding: 16px; }
+  .mono-note { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); }
 
   svg.topo { display: block; width: 100%; height: auto; max-width: 100%; }
-  .legend { display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 0 16px 14px; font-size: 13px; color: var(--muted); font-family: var(--font-mono); }
-  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 0 16px 12px; font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 5px; }
   .dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
 
-  .term { background: var(--term-bg); border-radius: var(--radius); font-family: var(--font-mono); font-size: 13px; line-height: 1.5; color: var(--term-ink); padding: 12px; height: 340px; overflow-y: auto; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tabs button { font-family: var(--font-mono); font-size: 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); padding: 5px 10px; cursor: pointer; }
+  .tabs button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+  :root[data-theme="dark"] .tabs button[aria-pressed="true"], :root:not([data-theme="light"]) .tabs button[aria-pressed="true"] { color: #06120f; }
+
+  .term { background: var(--term-bg); border-radius: 8px; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.5; color: var(--term-ink); padding: 12px; height: 320px; overflow-y: auto; }
   .term p { margin: 0; white-space: pre-wrap; word-break: break-word; }
   .term .echo { color: var(--term-dim); }
   .term .err { color: #f2846d; }
-  .term .good { color: #7fd9a8; }
   .prompt-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-family: var(--font-mono); font-size: 13px; }
   .prompt-row label { color: var(--accent); white-space: nowrap; }
   .prompt-row input { flex: 1; min-width: 0; background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; color: var(--ink); font-family: var(--font-mono); font-size: 13px; padding: 8px 10px; }
-  .prompt-row input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-
-  button { font-family: var(--font-sans); font-size: 13px; font-weight: 500; border-radius: 6px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); padding: 7px 12px; cursor: pointer; }
-  button:hover { border-color: var(--accent); }
-  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-  :root[data-theme="dark"] button.primary, :root:not([data-theme="light"]) button.primary { color: #06120f; }
-
-  .ping-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-  select { font-family: var(--font-mono); font-size: 13px; padding: 7px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); }
-  .ping-out { margin-top: 12px; background: var(--term-bg); color: var(--term-ink); border-radius: var(--radius); padding: 12px; font-family: var(--font-mono); font-size: 12.5px; white-space: pre-wrap; min-height: 76px; }
 
   ol.tasks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
-  ol.tasks li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 10px; align-items: start; }
-  .check { width: 18px; height: 18px; border-radius: 4px; border: 1.5px solid var(--line); display: grid; place-items: center; font-size: 12px; color: transparent; margin-top: 3px; }
+  ol.tasks li { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 10px; align-items: start; }
+  .check { width: 17px; height: 17px; border-radius: 4px; border: 1.5px solid var(--line); display: grid; place-items: center; font-size: 11px; color: transparent; margin-top: 3px; }
   li.done .check { background: var(--ok); border-color: var(--ok); color: #fff; }
   li.done .task-text { color: var(--muted); text-decoration: line-through; text-decoration-thickness: 1px; }
   .task-text b { font-weight: 600; }
   code { font-family: var(--font-mono); font-size: .92em; background: var(--surface-2); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
-
   .hint { margin: 14px 0 0; padding: 12px 14px; border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 6px 6px 0; font-size: 13.5px; }
-  .hint b { font-weight: 600; }
-  .cheat { margin: 0; padding: 0; list-style: none; font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); display: flex; flex-direction: column; gap: 5px; }
-  .cheat b { color: var(--ink); font-weight: 500; }
+
+  .ping-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .ping-out { margin-top: 12px; background: var(--term-bg); color: var(--term-ink); border-radius: 8px; padding: 12px; font-family: var(--font-mono); font-size: 12px; white-space: pre-wrap; min-height: 72px; }
+
+  details { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 12px; }
   details summary { cursor: pointer; font-size: 13px; color: var(--muted); font-family: var(--font-mono); }
-  .foot { margin-top: 26px; color: var(--muted); font-size: 13px; }
+  .cheat-group { margin: 12px 0 0; }
+  .cheat-group h4 { margin: 0 0 6px; font-size: 12px; font-family: var(--font-mono); letter-spacing: .07em; text-transform: uppercase; color: var(--accent); }
+  .cheat-group ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+  .cheat-group li { display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1fr); gap: 10px; font-size: 12.5px; }
+  .cheat-group li code { background: none; border: none; padding: 0; color: var(--ink); }
+  .cheat-group li span { color: var(--muted); }
+  @media (max-width: 560px) { .cheat-group li { grid-template-columns: minmax(0, 1fr); gap: 0; } }
+  .foot { margin-top: 24px; color: var(--muted); font-size: 13px; max-width: 76ch; }
 </style>
 
 <div class="wrap">
   <header class="top">
     <div>
-      <p class="eyebrow">Лабораторная 02 · этап 1</p>
-      <h1>Тренажёр VLAN: разделяем офис</h1>
-      <p class="sub">Один коммутатор, три отдела. Настрой VLAN командами Cisco IOS и проверь, кто кого видит.</p>
+      <p class="eyebrow">Сети с нуля · практикум</p>
+      <h1>Сетевой симулятор</h1>
+      <p class="sub">Коммутаторы, маршрутизатор и рабочие станции с настоящей командной строкой Cisco IOS. Задания трёх уровней сложности: от VLAN до маршрутизации, защиты портов и списков доступа.</p>
     </div>
-    <button id="theme" type="button">Сменить тему</button>
+    <button class="btn" id="theme" type="button">Сменить тему</button>
   </header>
+
+  <div class="bar">
+    <label class="mono-note" for="level">сложность</label>
+    <select id="level">
+      <option value="any">любая</option>
+      <option value="easy">лёгкий</option>
+      <option value="medium">средний</option>
+      <option value="hard">сложный</option>
+    </select>
+    <button class="btn primary" id="new-task" type="button">Новое задание</button>
+    <button class="btn" id="reset" type="button">Сбросить настройки</button>
+    <span class="lvl-note" id="scen-note"></span>
+  </div>
 
   <div class="grid">
     <div>
       <section class="panel">
-        <div class="panel-head"><h2>Схема сети</h2><span id="sw-name" style="font-family:var(--font-mono);font-size:12px;color:var(--muted)">Switch</span></div>
-        <svg class="topo" viewBox="0 0 560 300" role="img" aria-label="Схема: коммутатор и пять компьютеров">
-          <g id="links" stroke-width="2.5" fill="none"></g>
-          <rect x="170" y="24" width="220" height="46" rx="8" fill="var(--surface-2)" stroke="var(--line)"></rect>
-          <text x="280" y="44" text-anchor="middle" font-family="var(--font-mono)" font-size="13" font-weight="600" fill="var(--ink)" id="sw-label">Switch</text>
-          <text x="280" y="60" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--muted)">Cisco 2960 · 24 порта</text>
-          <g id="hosts"></g>
-        </svg>
-        <div class="legend">
-          <span><i class="dot" style="background:var(--v1)"></i> VLAN 1 (по умолчанию)</span>
-          <span><i class="dot" style="background:var(--v10)"></i> VLAN 10</span>
-          <span><i class="dot" style="background:var(--v20)"></i> VLAN 20</span>
-          <span><i class="dot" style="background:var(--v30)"></i> VLAN 30</span>
-        </div>
+        <div class="panel-head"><h2 id="scen-name">Схема</h2><span class="mono-note" id="scen-diff"></span></div>
+        <svg class="topo" id="svg" viewBox="0 0 640 330" role="img" aria-label="Схема стенда"></svg>
+        <div class="legend" id="legend"></div>
       </section>
 
       <section class="panel">
-        <div class="panel-head"><h2>Задание</h2><span id="progress" style="font-family:var(--font-mono);font-size:12px;color:var(--muted)">0 / 5</span></div>
+        <div class="panel-head"><h2>Задание</h2><span class="mono-note" id="progress">0 / 0</span></div>
         <div class="panel-body">
+          <p id="scen-goal" style="margin:0 0 14px"></p>
           <ol class="tasks" id="tasks"></ol>
-          <p class="hint" id="hint"><b>Начни так:</b> введи <code>enable</code>, затем <code>configure terminal</code>. Команды можно сокращать: <code>conf t</code> работает так же.</p>
+          <p class="hint" id="hint"></p>
         </div>
       </section>
     </div>
 
     <div>
       <section class="panel">
-        <div class="panel-head"><h2>Консоль коммутатора</h2><button id="reset" type="button">Сбросить</button></div>
+        <div class="panel-head">
+          <h2>Консоль</h2>
+          <div class="tabs" id="dev-tabs"></div>
+        </div>
         <div class="panel-body">
           <div class="term" id="term" aria-live="polite"></div>
           <form class="prompt-row" id="cli-form">
-            <label for="cli" id="prompt">Switch&gt;</label>
-            <input id="cli" name="cli" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="введите команду и нажмите Enter">
+            <label for="cli" id="prompt">&gt;</label>
+            <input id="cli" name="cli" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="команда + Enter, стрелка вверх — история">
           </form>
-          <details style="margin-top:12px">
-            <summary>Шпаргалка по командам</summary>
-            <ul class="cheat" style="margin-top:10px">
-              <li><b>enable</b> — режим администратора</li>
-              <li><b>configure terminal</b> — режим настройки</li>
-              <li><b>hostname SW1</b> — имя устройства</li>
-              <li><b>vlan 10</b> → <b>name BUH</b> — создать VLAN с именем</li>
-              <li><b>interface range fa0/1 - 8</b> — выбрать группу портов</li>
-              <li><b>switchport mode access</b> — порт для конечного устройства</li>
-              <li><b>switchport access vlan 10</b> — назначить порт в VLAN</li>
-              <li><b>show vlan brief</b> — какие порты в каком VLAN</li>
-              <li><b>show running-config</b> — текущая конфигурация</li>
-              <li><b>exit</b> / <b>end</b> — на уровень назад / в начало</li>
-              <li><b>write memory</b> — сохранить настройки</li>
-            </ul>
+
+          <details id="cheat">
+            <summary>Шпаргалка: все команды симулятора</summary>
+            <div id="cheat-body"></div>
           </details>
         </div>
       </section>
@@ -205,51 +161,359 @@
         <div class="panel-head"><h2>Проверка связи</h2></div>
         <div class="panel-body">
           <div class="ping-row">
-            <label for="src" style="font-size:13px;color:var(--muted)">с</label>
+            <label class="mono-note" for="src">с</label>
             <select id="src"></select>
-            <label for="dst" style="font-size:13px;color:var(--muted)">на</label>
+            <label class="mono-note" for="dst">на</label>
             <select id="dst"></select>
-            <button class="primary" id="ping-btn" type="button">ping</button>
+            <button class="btn primary" id="ping-btn" type="button">ping</button>
           </div>
-          <div class="ping-out" id="ping-out">Выбери два компьютера и нажми ping.</div>
+          <div class="ping-out" id="ping-out">Выбери два узла и нажми ping.</div>
         </div>
       </section>
     </div>
   </div>
 
-  <p class="foot">Тренажёр воспроизводит подмножество команд Cisco IOS: коммутатор второго уровня, режим access, проверка связи по ICMP. Маршрутизатора в схеме нет — это следующий этап.</p>
+  <p class="foot">Симулятор проверяет настройку по-настоящему: связь появится, только если VLAN созданы, порты в нужном режиме, транк пропускает нужные VLAN, подинтерфейсы маршрутизатора подняты и адреса шлюзов совпадают с настройками рабочих станций. Если ping не проходит — в ответе написано, на каком именно шаге всё останавливается.</p>
 </div>
 
 <script>
 (function () {
   "use strict";
 
-  var PCS = [
-    { name: "PC-BUH1", port: "fa0/1", ip: "192.168.10.11", x: 40 },
-    { name: "PC-BUH2", port: "fa0/2", ip: "192.168.10.12", x: 160 },
-    { name: "PC-IT1", port: "fa0/9", ip: "192.168.20.11", x: 280 },
-    { name: "PC-IT2", port: "fa0/10", ip: "192.168.20.12", x: 400 },
-    { name: "PC-GUEST1", port: "fa0/17", ip: "192.168.30.11", x: 505 }
-  ];
+  /* ======================= сценарии ======================= */
 
-  var state, term = document.getElementById("term");
-
-  function freshState() {
-    var ports = {};
-    for (var i = 1; i <= 24; i++) { ports["fa0/" + i] = { vlan: 1, mode: "dynamic" }; }
-    return {
-      hostname: "Switch",
-      mode: "user",           // user | priv | config | vlan | iface
-      vlans: { 1: "default" },
-      ports: ports,
-      selection: [],          // ports selected by interface / interface range
-      pendingVlan: null,
-      saved: false,
-      pinged: { same: false, cross: false }
-    };
+  function sw(name, portCount) {
+    var d = { type: "switch", name: name, hostname: name, vlans: { 1: "default" }, ports: {}, svi: {}, defGw: null };
+    for (var i = 1; i <= portCount; i++) {
+      d.ports["fa0/" + i] = { mode: "dynamic", vlan: 1, allowed: null, native: 1, up: true, portsec: 0 };
+    }
+    d.ports["gi0/1"] = { mode: "dynamic", vlan: 1, allowed: null, native: 1, up: true, portsec: 0 };
+    d.ports["gi0/2"] = { mode: "dynamic", vlan: 1, allowed: null, native: 1, up: true, portsec: 0 };
+    return d;
   }
 
-  /* ---------- вывод в консоль ---------- */
+  function rtr(name) {
+    return { type: "router", name: name, hostname: name,
+             ifaces: { "gi0/0": { up: false, ip: null, mask: null, vlan: null, sub: false, acl: null } },
+             acls: {} };
+  }
+
+  function pc(name, ip, gw, dev, port, vlanHint) {
+    return { name: name, ip: ip, mask: "255.255.255.0", gw: gw, dev: dev, port: port, vlanHint: vlanHint };
+  }
+
+  var SCENARIOS = [
+    {
+      id: "vlan-basic", diff: "easy", name: "Один коммутатор, два отдела",
+      goal: "В офисе один коммутатор. Бухгалтерия и ИТ подключены к нему же и сейчас видят друг друга. Раздели их по VLAN, чтобы отделы перестали видеть трафик соседей.",
+      hint: "Начни с <code>enable</code> и <code>configure terminal</code>. Сокращения работают: <code>conf t</code>, <code>int range fa0/1 - 4</code>.",
+      build: function () {
+        return {
+          devices: { SW1: sw("SW1", 8) },
+          links: [],
+          pcs: [
+            pc("PC-BUH1", "192.168.10.11", "192.168.10.1", "SW1", "fa0/1", 10),
+            pc("PC-BUH2", "192.168.10.12", "192.168.10.1", "SW1", "fa0/2", 10),
+            pc("PC-IT1", "192.168.20.11", "192.168.20.1", "SW1", "fa0/5", 20),
+            pc("PC-IT2", "192.168.20.12", "192.168.20.1", "SW1", "fa0/6", 20)
+          ]
+        };
+      },
+      tasks: [
+        { t: "Создать <b>VLAN 10</b> с именем <b>BUH</b> и <b>VLAN 20</b> с именем <b>IT</b>",
+          test: function (n) { return n.devices.SW1.vlans[10] === "BUH" && n.devices.SW1.vlans[20] === "IT"; } },
+        { t: "Порты <b>fa0/1–4</b> перевести в режим access и отдать в VLAN 10",
+          test: function (n) { return portsAre(n.devices.SW1, 1, 4, "access", 10); } },
+        { t: "Порты <b>fa0/5–8</b> перевести в режим access и отдать в VLAN 20",
+          test: function (n) { return portsAre(n.devices.SW1, 5, 8, "access", 20); } },
+        { t: "Проверить связь <b>внутри</b> отдела: PC-BUH1 → PC-BUH2 должна работать",
+          test: function (n) { return n.done.sameOk; } },
+        { t: "Убедиться, что <b>между</b> отделами связи нет: PC-BUH1 → PC-IT1",
+          test: function (n) { return n.done.crossFail; } },
+        { t: "Сохранить конфигурацию: <code>write memory</code>",
+          test: function (n) { return n.devices.SW1.saved; } }
+      ]
+    },
+
+    {
+      id: "trunk", diff: "medium", name: "Два этажа: транк между коммутаторами",
+      goal: "Отделы разъехались по двум этажам, на каждом свой коммутатор. Нужно, чтобы бухгалтерия с первого этажа видела бухгалтерию со второго, но не видела ИТ. Коммутаторы соединены кабелем gi0/1 — gi0/1.",
+      hint: "Кадры нескольких VLAN между коммутаторами передаёт <b>транк</b>: <code>switchport mode trunk</code> и <code>switchport trunk allowed vlan 10,20</code>. Не забудь создать VLAN на <b>обоих</b> коммутаторах.",
+      build: function () {
+        return {
+          devices: { SW1: sw("SW1", 8), SW2: sw("SW2", 8) },
+          links: [{ a: ["SW1", "gi0/1"], b: ["SW2", "gi0/1"] }],
+          pcs: [
+            pc("PC-BUH1", "192.168.10.11", "192.168.10.1", "SW1", "fa0/1", 10),
+            pc("PC-IT1", "192.168.20.11", "192.168.20.1", "SW1", "fa0/5", 20),
+            pc("PC-BUH2", "192.168.10.12", "192.168.10.1", "SW2", "fa0/1", 10),
+            pc("PC-IT2", "192.168.20.12", "192.168.20.1", "SW2", "fa0/5", 20)
+          ]
+        };
+      },
+      tasks: [
+        { t: "Создать VLAN 10 (BUH) и VLAN 20 (IT) <b>на обоих</b> коммутаторах",
+          test: function (n) { return ["SW1", "SW2"].every(function (d) {
+            return n.devices[d].vlans[10] === "BUH" && n.devices[d].vlans[20] === "IT"; }); } },
+        { t: "На обоих коммутаторах: <b>fa0/1–4</b> → VLAN 10, <b>fa0/5–8</b> → VLAN 20 в режиме access",
+          test: function (n) { return ["SW1", "SW2"].every(function (d) {
+            return portsAre(n.devices[d], 1, 4, "access", 10) && portsAre(n.devices[d], 5, 8, "access", 20); }); } },
+        { t: "Настроить <b>транк</b> на портах gi0/1 обоих коммутаторов",
+          test: function (n) { return ["SW1", "SW2"].every(function (d) { return n.devices[d].ports["gi0/1"].mode === "trunk"; }); } },
+        { t: "Разрешить на транке только VLAN 10 и 20: <code>switchport trunk allowed vlan 10,20</code>",
+          test: function (n) { return ["SW1", "SW2"].every(function (d) {
+            var a = n.devices[d].ports["gi0/1"].allowed;
+            return a && a.indexOf(10) >= 0 && a.indexOf(20) >= 0 && a.length === 2; }); } },
+        { t: "Проверить связь между этажами: PC-BUH1 → PC-BUH2",
+          test: function (n) { return n.done.trunkOk; } },
+        { t: "Сохранить конфигурацию на обоих коммутаторах",
+          test: function (n) { return n.devices.SW1.saved && n.devices.SW2.saved; } }
+      ]
+    },
+
+    {
+      id: "router-on-stick", diff: "hard", name: "Маршрутизация между VLAN",
+      goal: "Бухгалтерии и ИТ всё-таки нужно обмениваться данными — но под контролем. Настрой маршрутизацию между VLAN на маршрутизаторе R1: он подключён к SW1 одним кабелем (gi0/0 — gi0/1), значит, нужны подинтерфейсы.",
+      hint: "Схема называется router-on-a-stick: <code>interface gi0/0.10</code>, затем <code>encapsulation dot1q 10</code> и <code>ip address 192.168.10.1 255.255.255.0</code>. Физический интерфейс нужно поднять: <code>interface gi0/0</code> → <code>no shutdown</code>.",
+      build: function () {
+        return {
+          devices: { SW1: sw("SW1", 8), R1: rtr("R1") },
+          links: [{ a: ["SW1", "gi0/1"], b: ["R1", "gi0/0"] }],
+          pcs: [
+            pc("PC-BUH1", "192.168.10.11", "192.168.10.1", "SW1", "fa0/1", 10),
+            pc("PC-BUH2", "192.168.10.12", "192.168.10.1", "SW1", "fa0/2", 10),
+            pc("PC-IT1", "192.168.20.11", "192.168.20.1", "SW1", "fa0/5", 20),
+            pc("SRV-1C", "192.168.30.10", "192.168.30.1", "SW1", "fa0/8", 30)
+          ]
+        };
+      },
+      tasks: [
+        { t: "Создать VLAN 10 (BUH), 20 (IT), 30 (SRV) и раздать порты: fa0/1–4 → 10, fa0/5–7 → 20, fa0/8 → 30",
+          test: function (n) { var s = n.devices.SW1;
+            return s.vlans[10] && s.vlans[20] && s.vlans[30] &&
+              portsAre(s, 1, 4, "access", 10) && portsAre(s, 5, 7, "access", 20) && portsAre(s, 8, 8, "access", 30); } },
+        { t: "Настроить <b>транк</b> на gi0/1 в сторону маршрутизатора",
+          test: function (n) { return n.devices.SW1.ports["gi0/1"].mode === "trunk"; } },
+        { t: "Поднять физический интерфейс маршрутизатора: <code>interface gi0/0</code> → <code>no shutdown</code>",
+          test: function (n) { return n.devices.R1.ifaces["gi0/0"].up; } },
+        { t: "Создать три подинтерфейса с <code>encapsulation dot1q</code> и адресами шлюзов .1 в каждой сети",
+          test: function (n) { var r = n.devices.R1;
+            return [[10, "192.168.10.1"], [20, "192.168.20.1"], [30, "192.168.30.1"]].every(function (p) {
+              return Object.keys(r.ifaces).some(function (k) {
+                var i = r.ifaces[k]; return i.sub && i.vlan === p[0] && i.ip === p[1]; }); }); } },
+        { t: "Проверить маршрутизацию: PC-BUH1 → PC-IT1 (разные VLAN) должна заработать",
+          test: function (n) { return n.done.routeOk; } },
+        { t: "Проверить доступ к серверу: PC-IT1 → SRV-1C",
+          test: function (n) { return n.done.srvOk; } }
+      ]
+    },
+
+    {
+      id: "port-security", diff: "medium", name: "Защита портов доступа",
+      goal: "Служба безопасности требует навести порядок на портах: выделить сеть управления, закрыть неиспользуемые порты и ограничить подключение чужих устройств.",
+      hint: "Сеть управления: <code>interface vlan 99</code> → <code>ip address 192.168.99.10 255.255.255.0</code>. Неиспользуемый порт гасится командой <code>shutdown</code>, защита порта — <code>switchport port-security maximum 1</code>.",
+      build: function () {
+        return {
+          devices: { SW1: sw("SW1", 8) },
+          links: [],
+          pcs: [
+            pc("PC-BUH1", "192.168.10.11", "192.168.10.1", "SW1", "fa0/1", 10),
+            pc("PC-BUH2", "192.168.10.12", "192.168.10.1", "SW1", "fa0/2", 10),
+            pc("Ноут гостя", "192.168.10.66", "192.168.10.1", "SW1", "fa0/7", 10)
+          ]
+        };
+      },
+      tasks: [
+        { t: "Создать <b>VLAN 10 (BUH)</b> и <b>VLAN 99 (MGMT)</b>",
+          test: function (n) { var s = n.devices.SW1; return s.vlans[10] === "BUH" && s.vlans[99] === "MGMT"; } },
+        { t: "Порты <b>fa0/1–2</b> — access в VLAN 10 (рабочие места бухгалтерии)",
+          test: function (n) { return portsAre(n.devices.SW1, 1, 2, "access", 10); } },
+        { t: "Задать коммутатору адрес управления в VLAN 99: <code>interface vlan 99</code> + <code>ip address</code>",
+          test: function (n) { var v = n.devices.SW1.svi[99]; return !!(v && v.ip); } },
+        { t: "Включить <b>port-security</b> с лимитом 1 MAC на портах fa0/1–2",
+          test: function (n) { var s = n.devices.SW1;
+            return s.ports["fa0/1"].portsec === 1 && s.ports["fa0/2"].portsec === 1; } },
+        { t: "Погасить неиспользуемые порты <b>fa0/3–8</b> командой <code>shutdown</code>",
+          test: function (n) { var s = n.devices.SW1, i;
+            for (i = 3; i <= 8; i++) { if (s.ports["fa0/" + i].up) { return false; } } return true; } },
+        { t: "Убедиться, что ноутбук гостя на fa0/7 потерял связь",
+          test: function (n) { return n.done.guestDown; } }
+      ]
+    },
+
+    {
+      id: "acl", diff: "hard", name: "Списки доступа: гости отдельно",
+      goal: "К сети добавили гостевой VLAN 30. Гостям нужен доступ в интернет, но не к серверу бухгалтерии. Настрой маршрутизацию и закрой доступ списком доступа на маршрутизаторе.",
+      hint: "Сначала подними маршрутизацию, как в задании про router-on-a-stick. Затем: <code>access-list 110 deny ip 192.168.30.0 0.0.0.255 192.168.10.0 0.0.0.255</code>, <code>access-list 110 permit ip any any</code> и примени на подинтерфейсе: <code>ip access-group 110 in</code>.",
+      build: function () {
+        return {
+          devices: { SW1: sw("SW1", 8), R1: rtr("R1") },
+          links: [{ a: ["SW1", "gi0/1"], b: ["R1", "gi0/0"] }],
+          pcs: [
+            pc("SRV-BUH", "192.168.10.10", "192.168.10.1", "SW1", "fa0/1", 10),
+            pc("PC-BUH1", "192.168.10.11", "192.168.10.1", "SW1", "fa0/2", 10),
+            pc("Гость-1", "192.168.30.50", "192.168.30.1", "SW1", "fa0/7", 30),
+            pc("Гость-2", "192.168.30.51", "192.168.30.1", "SW1", "fa0/8", 30)
+          ]
+        };
+      },
+      tasks: [
+        { t: "Создать VLAN 10 (BUH) и VLAN 30 (GUEST), порты fa0/1–4 → 10, fa0/5–8 → 30",
+          test: function (n) { var s = n.devices.SW1;
+            return s.vlans[10] && s.vlans[30] && portsAre(s, 1, 4, "access", 10) && portsAre(s, 5, 8, "access", 30); } },
+        { t: "Транк на gi0/1 и поднятый gi0/0 на маршрутизаторе",
+          test: function (n) { return n.devices.SW1.ports["gi0/1"].mode === "trunk" && n.devices.R1.ifaces["gi0/0"].up; } },
+        { t: "Подинтерфейсы для VLAN 10 (192.168.10.1) и VLAN 30 (192.168.30.1)",
+          test: function (n) { var r = n.devices.R1;
+            return [[10, "192.168.10.1"], [30, "192.168.30.1"]].every(function (p) {
+              return Object.keys(r.ifaces).some(function (k) {
+                var i = r.ifaces[k]; return i.sub && i.vlan === p[0] && i.ip === p[1]; }); }); } },
+        { t: "Создать список доступа <b>110</b>: запретить сети гостей доступ к сети бухгалтерии, остальное разрешить",
+          test: function (n) { var a = n.devices.R1.acls[110];
+            return !!(a && a.some(function (r) { return r.action === "deny" && r.src === "192.168.30.0" && r.dst === "192.168.10.0"; }) &&
+                      a.some(function (r) { return r.action === "permit"; })); } },
+        { t: "Применить список на подинтерфейсе гостевого VLAN: <code>ip access-group 110 in</code>",
+          test: function (n) { var r = n.devices.R1;
+            return Object.keys(r.ifaces).some(function (k) { var i = r.ifaces[k]; return i.vlan === 30 && i.acl === 110; }); } },
+        { t: "Проверить: Гость-1 → SRV-BUH не проходит, а Гость-1 → Гость-2 работает",
+          test: function (n) { return n.done.aclBlocked && n.done.guestOk; } }
+      ]
+    }
+  ];
+
+  /* ======================= состояние ======================= */
+
+  var net = null, scen = null, current = "SW1", history = [], histIdx = -1;
+
+  function portsAre(d, from, to, mode, vlan) {
+    for (var i = from; i <= to; i++) {
+      var p = d.ports["fa0/" + i];
+      if (!p || p.mode !== mode || p.vlan !== vlan) { return false; }
+    }
+    return true;
+  }
+
+  function subnetOf(ip) { return ip.split(".").slice(0, 3).join(".") + ".0"; }
+  function sameSubnet(a, b) { return subnetOf(a) === subnetOf(b); }
+  function pcByName(name) { return net.pcs.filter(function (p) { return p.name === name; })[0]; }
+  function dev(name) { return net.devices[name]; }
+
+  function build(scenario) {
+    var b = scenario.build();
+    net = { devices: b.devices, links: b.links, pcs: b.pcs, done: {}, modes: {} };
+    Object.keys(net.devices).forEach(function (d) {
+      net.modes[d] = { mode: "user", sel: [], vlanCtx: null, ifCtx: null };
+      net.devices[d].saved = false;
+    });
+    scen = scenario;
+    current = Object.keys(net.devices)[0];
+  }
+
+  /* ======================= сеть: проверка связи ======================= */
+
+  function accessVlan(p) {
+    var d = dev(p.dev), port = d.ports[p.port];
+    if (!port.up) { return { err: "порт " + p.port + " на " + d.hostname + " выключен (shutdown)" }; }
+    if (port.mode !== "access") { return { err: "порт " + p.port + " не переведён в режим access" }; }
+    return { vlan: port.vlan };
+  }
+
+  function trunkOk(a, b, vlan) {   // есть ли транк между устройствами, пропускающий vlan
+    for (var i = 0; i < net.links.length; i++) {
+      var l = net.links[i], ends = [l.a, l.b];
+      var names = [l.a[0], l.b[0]];
+      if (names.indexOf(a) < 0 || names.indexOf(b) < 0) { continue; }
+      var okBoth = ends.every(function (e) {
+        var d = dev(e[0]);
+        if (d.type === "router") { return true; }
+        var p = d.ports[e[1]];
+        if (!p || !p.up) { return false; }
+        if (p.mode !== "trunk") { return false; }
+        return !p.allowed || p.allowed.indexOf(vlan) >= 0;
+      });
+      if (okBoth) { return true; }
+      return false;
+    }
+    return false;
+  }
+
+  function l2Reachable(a, b, vlan) {
+    if (a.dev === b.dev) { return { ok: true }; }
+    if (trunkOk(a.dev, b.dev, vlan)) { return { ok: true }; }
+    return { ok: false, why: "между " + dev(a.dev).hostname + " и " + dev(b.dev).hostname +
+      " нет транка, пропускающего VLAN " + vlan + ". Нужен режим trunk на обоих портах и VLAN " + vlan + " в списке разрешённых." };
+  }
+
+  function routerIfaceFor(vlan) {
+    var r = net.devices.R1;
+    if (!r) { return null; }
+    var key = Object.keys(r.ifaces).filter(function (k) {
+      var i = r.ifaces[k]; return i.sub && i.vlan === vlan && i.ip;
+    })[0];
+    return key ? r.ifaces[key] : null;
+  }
+
+  function aclAllows(iface, srcIp, dstIp) {
+    if (!iface || !iface.acl) { return true; }
+    var rules = net.devices.R1.acls[iface.acl] || [];
+    for (var i = 0; i < rules.length; i++) {
+      var r = rules[i];
+      var srcM = r.src === "any" || subnetOf(srcIp) === r.src;
+      var dstM = r.dst === "any" || subnetOf(dstIp) === r.dst;
+      if (srcM && dstM) { return r.action === "permit"; }
+    }
+    return false;   // неявный запрет в конце списка
+  }
+
+  function doPing(srcName, dstName) {
+    var a = pcByName(srcName), b = pcByName(dstName);
+    if (!a || !b || a === b) { return { lines: "Выбери два разных узла." }; }
+
+    var va = accessVlan(a), vb = accessVlan(b);
+    var head = a.name + "> ping " + b.ip + "\n\n";
+    if (va.err) { return { lines: head + "Сбой: " + va.err, ok: false }; }
+    if (vb.err) { return { lines: head + "Ответа нет.\n\n▸ Причина: " + vb.err, ok: false }; }
+
+    if (sameSubnet(a.ip, b.ip)) {
+      if (va.vlan !== vb.vlan) {
+        return { ok: false, lines: head + "Request timed out. (4 раза)\n\n▸ Причина: порт " + a.port +
+          " в VLAN " + va.vlan + ", а порт " + b.port + " в VLAN " + vb.vlan +
+          ". Коммутатор не передаёт кадры между разными VLAN." };
+      }
+      var l2 = l2Reachable(a, b, va.vlan);
+      if (!l2.ok) { return { ok: false, lines: head + "Request timed out. (4 раза)\n\n▸ Причина: " + l2.why }; }
+      return { ok: true, vlan: va.vlan, lines: head + "Reply from " + b.ip + ": bytes=32 time<1ms TTL=128\n".repeat(4) +
+        "\nPackets: Sent = 4, Received = 4, Lost = 0 (0% loss)\n\n▸ Оба порта в VLAN " + va.vlan + " и в одной подсети." };
+    }
+
+    // разные подсети — нужен маршрутизатор
+    var gwA = routerIfaceFor(va.vlan), gwB = routerIfaceFor(vb.vlan);
+    if (!net.devices.R1) {
+      return { ok: false, lines: head + "Destination host unreachable.\n\n▸ Причина: адреса в разных подсетях, " +
+        "а маршрутизатора в этой схеме нет. Коммутатор второго уровня между сетями не маршрутизирует." };
+    }
+    if (!net.devices.R1.ifaces["gi0/0"].up) {
+      return { ok: false, lines: head + "Request timed out.\n\n▸ Причина: физический интерфейс gi0/0 маршрутизатора выключен. Нужна команда no shutdown." };
+    }
+    if (!gwA) { return { ok: false, lines: head + "Destination host unreachable.\n\n▸ Причина: на маршрутизаторе нет подинтерфейса для VLAN " +
+      va.vlan + " с адресом шлюза. Нужны encapsulation dot1q " + va.vlan + " и ip address." }; }
+    if (gwA.ip !== a.gw) { return { ok: false, lines: head + "Destination host unreachable.\n\n▸ Причина: рабочая станция считает шлюзом " +
+      a.gw + ", а на подинтерфейсе VLAN " + va.vlan + " настроен адрес " + gwA.ip + "." }; }
+    if (!gwB) { return { ok: false, lines: head + "Request timed out.\n\n▸ Причина: на маршрутизаторе нет подинтерфейса для VLAN " + vb.vlan + "." }; }
+    if (!trunkOk(a.dev, "R1", va.vlan) || !trunkOk(b.dev, "R1", vb.vlan)) {
+      return { ok: false, lines: head + "Request timed out.\n\n▸ Причина: транк до маршрутизатора не пропускает нужные VLAN." };
+    }
+    if (!aclAllows(gwA, a.ip, b.ip)) {
+      return { ok: false, acl: true, lines: head + "Reply from " + a.gw + ": Destination host unreachable.\n\n" +
+        "▸ Причина: список доступа " + gwA.acl + " на подинтерфейсе VLAN " + va.vlan + " запрещает этот трафик. Так и задумано." };
+    }
+    return { ok: true, routed: true, lines: head + "Reply from " + b.ip + ": bytes=32 time=1ms TTL=127\n".repeat(4) +
+      "\nPackets: Sent = 4, Received = 4, Lost = 0 (0% loss)\n\n▸ Пакеты прошли через маршрутизатор: TTL уменьшился со 128 до 127." };
+  }
+
+  /* ======================= разбор команд ======================= */
+
+  var term = document.getElementById("term");
   function out(text, cls) {
     var p = document.createElement("p");
     if (cls) { p.className = cls; }
@@ -257,73 +521,130 @@
     term.appendChild(p);
     term.scrollTop = term.scrollHeight;
   }
+  function m(word, full, min) { return word.length >= min && full.indexOf(word) === 0; }
+
+  function ctx() { return net.modes[current]; }
+  function cur() { return net.devices[current]; }
 
   function prompt() {
-    var h = state.hostname;
-    if (state.mode === "user") { return h + ">"; }
-    if (state.mode === "priv") { return h + "#"; }
-    if (state.mode === "config") { return h + "(config)#"; }
-    if (state.mode === "vlan") { return h + "(config-vlan)#"; }
-    return h + "(config-if" + (state.selection.length > 1 ? "-range" : "") + ")#";
+    var c = ctx(), h = cur().hostname;
+    if (c.mode === "user") { return h + ">"; }
+    if (c.mode === "priv") { return h + "#"; }
+    if (c.mode === "config") { return h + "(config)#"; }
+    if (c.mode === "vlan") { return h + "(config-vlan)#"; }
+    if (c.mode === "iface") { return h + "(config-if" + (c.sel.length > 1 ? "-range" : "") + ")#"; }
+    return h + "#";
   }
 
-  function refreshPrompt() {
-    document.getElementById("prompt").textContent = prompt();
-    document.getElementById("sw-label").textContent = state.hostname;
-    document.getElementById("sw-name").textContent = state.hostname;
-  }
-
-  /* ---------- разбор команд ---------- */
-  function m(word, full, min) {          // поддержка сокращений: conf -> configure
-    return word.length >= min && full.indexOf(word) === 0;
-  }
-
-  function parsePortList(rest) {
-    // "fa0/1", "fa0/1 - 8", "range fa0/1 - 8", "f0/9 - 16"
-    var txt = rest.replace(/^range\s+/, "").replace(/\s*-\s*/g, "-");
-    var mm = txt.match(/^(?:fa|fas|fast|fastethernet|f|gi|g)?\s*0\/(\d+)(?:-(\d+))?$/i);
+  function parsePorts(rest, d) {
+    var txt = rest.replace(/^range\s+/, "").replace(/\s*-\s*/g, "-").toLowerCase();
+    var mm = txt.match(/^(fa|fas|fast|fastethernet|f|gi|gig|gigabitethernet|g)?\s*0\/(\d+)(?:-(\d+))?$/);
     if (!mm) { return null; }
-    var a = parseInt(mm[1], 10), b = mm[2] ? parseInt(mm[2], 10) : a, list = [];
-    if (a < 1 || b > 24 || b < a) { return null; }
-    for (var i = a; i <= b; i++) { list.push("fa0/" + i); }
+    var pre = (mm[1] || "fa").charAt(0) === "g" ? "gi" : "fa";
+    var a = parseInt(mm[2], 10), b = mm[3] ? parseInt(mm[3], 10) : a, list = [];
+    for (var i = a; i <= b; i++) {
+      var key = pre + "0/" + i;
+      if (!d.ports[key]) { return null; }
+      list.push(key);
+    }
     return list;
   }
 
-  function showVlanBrief() {
+  function vlanList(txt) {
+    var out2 = [];
+    txt.split(",").forEach(function (part) {
+      var r = part.split("-");
+      if (r.length === 2) {
+        for (var i = +r[0]; i <= +r[1]; i++) { out2.push(i); }
+      } else if (part.trim()) { out2.push(parseInt(part, 10)); }
+    });
+    return out2.filter(function (v) { return !isNaN(v); });
+  }
+
+  function showVlanBrief(d) {
     var lines = ["", "VLAN Name                             Status    Ports",
-                 "---- -------------------------------- --------- -------------------------------"];
-    Object.keys(state.vlans).sort(function (a, b) { return a - b; }).forEach(function (id) {
-      var members = [];
-      for (var i = 1; i <= 24; i++) {
-        var p = "fa0/" + i;
-        if (state.ports[p].vlan === Number(id)) { members.push("Fa0/" + i); }
-      }
-      var name = state.vlans[id];
-      var head = String(id).padEnd(5) + name.padEnd(33) + "active    ";
+                 "---- -------------------------------- --------- ------------------------"];
+    Object.keys(d.vlans).sort(function (a, b) { return a - b; }).forEach(function (id) {
+      var members = Object.keys(d.ports).filter(function (k) {
+        return d.ports[k].mode === "access" && d.ports[k].vlan === Number(id);
+      }).map(function (k) { return k.replace("fa", "Fa").replace("gi", "Gi"); });
+      var head = String(id).padEnd(5) + d.vlans[id].padEnd(33) + "active    ";
       if (!members.length) { lines.push(head); return; }
-      lines.push(head + members.slice(0, 6).join(", "));
-      for (var k = 6; k < members.length; k += 6) {
-        lines.push(" ".repeat(48) + members.slice(k, k + 6).join(", "));
-      }
+      lines.push(head + members.slice(0, 4).join(", "));
+      for (var k = 4; k < members.length; k += 4) { lines.push(" ".repeat(48) + members.slice(k, k + 4).join(", ")); }
     });
     lines.push("");
     out(lines.join("\n"));
   }
 
-  function showRunning() {
-    var lines = ["Building configuration...", "", "!", "hostname " + state.hostname, "!"];
-    Object.keys(state.vlans).sort(function (a, b) { return a - b; }).forEach(function (id) {
-      if (id === "1") { return; }
-      lines.push("vlan " + id, " name " + state.vlans[id], "!");
+  function showTrunk(d) {
+    var rows = Object.keys(d.ports).filter(function (k) { return d.ports[k].mode === "trunk"; });
+    if (!rows.length) { out("\nНи один порт не настроен как транк.\n"); return; }
+    var lines = ["", "Port        Mode      Native vlan   Vlans allowed on trunk"];
+    rows.forEach(function (k) {
+      var p = d.ports[k];
+      lines.push(k.replace("gi", "Gi").replace("fa", "Fa").padEnd(12) + "on".padEnd(10) +
+        String(p.native).padEnd(14) + (p.allowed ? p.allowed.join(",") : "1-4094"));
     });
-    for (var i = 1; i <= 24; i++) {
-      var p = state.ports["fa0/" + i];
-      if (p.mode === "access" || p.vlan !== 1) {
-        lines.push("interface FastEthernet0/" + i);
-        if (p.mode === "access") { lines.push(" switchport mode access"); }
-        if (p.vlan !== 1) { lines.push(" switchport access vlan " + p.vlan); }
+    lines.push("");
+    out(lines.join("\n"));
+  }
+
+  function showIpInt(d) {
+    var lines = ["", "Interface            IP-Address      Status"];
+    if (d.type === "router") {
+      Object.keys(d.ifaces).forEach(function (k) {
+        var i = d.ifaces[k];
+        lines.push(k.padEnd(21) + String(i.ip || "unassigned").padEnd(16) + (i.up || i.sub ? "up" : "administratively down"));
+      });
+    } else {
+      Object.keys(d.svi).forEach(function (v) {
+        lines.push(("Vlan" + v).padEnd(21) + String(d.svi[v].ip || "unassigned").padEnd(16) + "up");
+      });
+      Object.keys(d.ports).forEach(function (k) {
+        lines.push(k.replace("fa", "Fa").replace("gi", "Gi").padEnd(21) + "unassigned".padEnd(16) + (d.ports[k].up ? "up" : "administratively down"));
+      });
+    }
+    lines.push("");
+    out(lines.join("\n"));
+  }
+
+  function showRun(d) {
+    var lines = ["Building configuration...", "", "!", "hostname " + d.hostname, "!"];
+    if (d.type === "switch") {
+      Object.keys(d.vlans).forEach(function (id) {
+        if (id !== "1") { lines.push("vlan " + id, " name " + d.vlans[id], "!"); }
+      });
+      Object.keys(d.ports).forEach(function (k) {
+        var p = d.ports[k], body = [];
+        if (p.mode === "access") { body.push(" switchport mode access"); if (p.vlan !== 1) { body.push(" switchport access vlan " + p.vlan); } }
+        if (p.mode === "trunk") { body.push(" switchport mode trunk");
+          if (p.allowed) { body.push(" switchport trunk allowed vlan " + p.allowed.join(",")); }
+          if (p.native !== 1) { body.push(" switchport trunk native vlan " + p.native); } }
+        if (p.portsec) { body.push(" switchport port-security maximum " + p.portsec); }
+        if (!p.up) { body.push(" shutdown"); }
+        if (body.length) { lines.push("interface " + k.replace("fa", "FastEthernet").replace("gi", "GigabitEthernet"), body.join("\n"), "!"); }
+      });
+      Object.keys(d.svi).forEach(function (v) {
+        lines.push("interface Vlan" + v, " ip address " + d.svi[v].ip + " " + d.svi[v].mask, "!");
+      });
+    } else {
+      Object.keys(d.ifaces).forEach(function (k) {
+        var i = d.ifaces[k], body = [];
+        if (i.vlan) { body.push(" encapsulation dot1Q " + i.vlan); }
+        if (i.ip) { body.push(" ip address " + i.ip + " " + i.mask); }
+        if (i.acl) { body.push(" ip access-group " + i.acl + " in"); }
+        if (!i.up && !i.sub) { body.push(" shutdown"); }
+        lines.push("interface " + k, body.join("\n") || " no ip address", "!");
+      });
+      Object.keys(d.acls).forEach(function (n) {
+        d.acls[n].forEach(function (r) {
+          lines.push("access-list " + n + " " + r.action + " ip " +
+            (r.src === "any" ? "any" : r.src + " 0.0.0.255") + " " +
+            (r.dst === "any" ? "any" : r.dst + " 0.0.0.255"));
+        });
         lines.push("!");
-      }
+      });
     }
     lines.push("end", "");
     out(lines.join("\n"));
@@ -332,248 +653,447 @@
   function run(raw) {
     var line = raw.trim().replace(/\s+/g, " ");
     if (!line) { return; }
-    var w = line.split(" "), c = w[0].toLowerCase();
+    var w = line.split(" "), c = w[0].toLowerCase(), d = cur(), st = ctx();
 
-    if (c === "?" ) { out("Доступные команды перечислены в шпаргалке под консолью."); return; }
+    if (c === "?") { out("Список команд — в шпаргалке под консолью."); return; }
 
-    /* уровни доступа */
-    if (m(c, "enable", 2) && state.mode === "user") { state.mode = "priv"; return; }
-    if (m(c, "disable", 4) && state.mode === "priv") { state.mode = "user"; return; }
-    if (c === "end") {
-      if (state.mode === "user") { out("% Неизвестная команда: " + line, "err"); return; }
-      state.mode = "priv"; state.selection = []; state.pendingVlan = null; return;
-    }
+    if (m(c, "enable", 2) && st.mode === "user") { st.mode = "priv"; return; }
+    if (m(c, "disable", 4)) { st.mode = "user"; return; }
+    if (c === "end") { if (st.mode !== "user") { st.mode = "priv"; st.sel = []; st.ifCtx = null; } return; }
     if (m(c, "exit", 3)) {
-      if (state.mode === "iface" || state.mode === "vlan") { state.mode = "config"; state.selection = []; state.pendingVlan = null; }
-      else if (state.mode === "config") { state.mode = "priv"; }
-      else if (state.mode === "priv") { state.mode = "user"; }
+      if (st.mode === "iface" || st.mode === "vlan") { st.mode = "config"; st.sel = []; st.ifCtx = null; }
+      else if (st.mode === "config") { st.mode = "priv"; }
+      else if (st.mode === "priv") { st.mode = "user"; }
       return;
     }
-    if (m(c, "configure", 4) && state.mode === "priv") { state.mode = "config"; out("Enter configuration commands, one per line.  End with CNTL/Z.", "echo"); return; }
+    if (m(c, "configure", 4) && st.mode === "priv") { st.mode = "config"; out("Enter configuration commands, one per line.  End with CNTL/Z.", "echo"); return; }
 
-    /* show */
-    if (m(c, "show", 2) || c === "sh") {
-      if (state.mode === "user") { out("% Сначала войди в режим администратора: enable", "err"); return; }
+    if (m(c, "show", 2)) {
+      if (st.mode === "user") { out("% Сначала войди в режим администратора: enable", "err"); return; }
       var what = (w[1] || "").toLowerCase(), sub = (w[2] || "").toLowerCase();
-      if (m(what, "vlan", 1)) {
-        if (!sub || m(sub, "brief", 2)) { showVlanBrief(); markTask(2); return; }
+      if (m(what, "vlan", 1) && (!sub || m(sub, "brief", 2))) { if (d.type !== "switch") { out("% Команда доступна на коммутаторе", "err"); return; } showVlanBrief(d); net.done.showVlan = true; return; }
+      if (m(what, "interfaces", 3) && m(sub, "trunk", 2)) { showTrunk(d); return; }
+      if (m(what, "ip", 2) && m(sub, "interface", 3)) { showIpInt(d); return; }
+      if (m(what, "ip", 2) && m(sub, "route", 3)) {
+        var rl = ["", "Codes: C - connected"];
+        Object.keys(d.ifaces || {}).forEach(function (k) {
+          var i = d.ifaces[k];
+          if (i.ip) { rl.push("C    " + subnetOf(i.ip) + "/24 is directly connected, " + k); }
+        });
+        rl.push(""); out(rl.join("\n")); return;
       }
-      if (m(what, "running-config", 3)) { showRunning(); return; }
-      if (m(what, "interfaces", 3)) {
-        var t = ["", "Port      Mode      VLAN"];
-        for (var i = 1; i <= 24; i++) {
-          var pp = state.ports["fa0/" + i];
-          t.push(("Fa0/" + i).padEnd(10) + pp.mode.padEnd(10) + pp.vlan);
-        }
-        t.push(""); out(t.join("\n")); return;
-      }
-      out("% Такой команды show в тренажёре нет. Попробуй: show vlan brief", "err");
+      if (m(what, "running-config", 3)) { showRun(d); return; }
+      out("% Такой команды show в симуляторе нет. Есть: show vlan brief, show interfaces trunk, show ip interface brief, show ip route, show running-config", "err");
       return;
     }
 
-    if (m(c, "write", 2) || (c === "copy" && (w[1] || "").indexOf("run") === 0)) {
-      if (state.mode !== "priv") { out("% Команда доступна в режиме администратора (SW#)", "err"); return; }
-      state.saved = true; out("Building configuration...\n[OK]"); return;
+    if ((m(c, "write", 2) || c === "copy") && st.mode === "priv") { d.saved = true; out("Building configuration...\n[OK]"); return; }
+
+    if (st.mode === "priv") { out("% Настройка выполняется после команды configure terminal", "err"); return; }
+    if (st.mode === "user") { out("% Сначала войди в режим администратора: enable", "err"); return; }
+
+    /* --- режим настройки --- */
+    if (m(c, "hostname", 4) && w[1] && st.mode === "config") { d.hostname = w[1]; return; }
+
+    if (m(c, "vlan", 3) && st.mode === "config" && d.type === "switch") {
+      var id = parseInt(w[1], 10);
+      if (!id || id < 1 || id > 4094) { out("% Неверный номер VLAN", "err"); return; }
+      if (!d.vlans[id]) { d.vlans[id] = "VLAN" + String(id).padStart(4, "0"); }
+      st.mode = "vlan"; st.vlanCtx = id; return;
+    }
+    if (m(c, "name", 2) && st.mode === "vlan" && w[1]) { d.vlans[st.vlanCtx] = w[1]; return; }
+
+    if (m(c, "interface", 3)) {
+      var rest = w.slice(1).join(" ");
+      if (d.type === "switch" && /^vlan/i.test(rest)) {
+        var vid = parseInt(rest.replace(/[^0-9]/g, ""), 10);
+        if (!d.vlans[vid]) { out("% Сначала создай VLAN " + vid, "err"); return; }
+        d.svi[vid] = d.svi[vid] || { ip: null, mask: null };
+        st.mode = "iface"; st.sel = []; st.ifCtx = { svi: vid }; return;
+      }
+      if (d.type === "router") {
+        var rm = rest.toLowerCase().replace(/gigabitethernet|gig|gi|g/, "gi").replace(/\s+/g, "");
+        if (!/^gi0\/0(\.\d+)?$/.test(rm)) { out("% Есть только интерфейс gi0/0 и его подинтерфейсы, например gi0/0.10", "err"); return; }
+        if (!d.ifaces[rm]) { d.ifaces[rm] = { up: true, ip: null, mask: null, vlan: null, sub: true, acl: null }; }
+        st.mode = "iface"; st.sel = []; st.ifCtx = { rif: rm }; return;
+      }
+      var list = parsePorts(rest, d);
+      if (!list) { out("% Не понял порт. Примеры: interface fa0/1 · interface range fa0/1 - 4 · interface gi0/1", "err"); return; }
+      st.sel = list; st.mode = "iface"; st.ifCtx = null; return;
     }
 
-    /* режим настройки */
-    if (state.mode === "config" || state.mode === "iface" || state.mode === "vlan") {
-      if (m(c, "hostname", 4) && w[1]) {
-        if (state.mode !== "config") { out("% Команда вводится в режиме (config)#", "err"); return; }
-        state.hostname = w[1]; refreshPrompt(); return;
+    if (st.mode === "iface" && m(c, "switchport", 4)) {
+      if (!st.sel.length) { out("% Команда применяется к портам коммутатора", "err"); return; }
+      var a1 = (w[1] || "").toLowerCase(), a2 = (w[2] || "").toLowerCase();
+      if (m(a1, "mode", 2) && m(a2, "access", 3)) { st.sel.forEach(function (k) { d.ports[k].mode = "access"; }); return; }
+      if (m(a1, "mode", 2) && m(a2, "trunk", 2)) { st.sel.forEach(function (k) { d.ports[k].mode = "trunk"; }); return; }
+      if (m(a1, "access", 3) && m(a2, "vlan", 1)) {
+        var v = parseInt(w[3], 10);
+        if (!v) { out("% Укажи номер VLAN", "err"); return; }
+        if (!d.vlans[v]) { out("% VLAN " + v + " не существует — создай его командой vlan " + v, "err"); return; }
+        st.sel.forEach(function (k) { d.ports[k].vlan = v; }); return;
       }
-      if (m(c, "vlan", 3) && w[1] && state.mode === "config") {
-        var id = parseInt(w[1], 10);
-        if (!id || id < 1 || id > 4094) { out("% Неверный номер VLAN", "err"); return; }
-        if (!state.vlans[id]) { state.vlans[id] = "VLAN" + String(id).padStart(4, "0"); }
-        state.mode = "vlan"; state.pendingVlan = id; return;
-      }
-      if (m(c, "name", 2) && state.mode === "vlan" && w[1]) {
-        state.vlans[state.pendingVlan] = w[1]; return;
-      }
-      if (m(c, "interface", 3) && state.mode !== "vlan") {
-        var list = parsePortList(w.slice(1).join(" "));
-        if (!list) { out("% Не понял порт. Примеры: interface fa0/1   или   interface range fa0/1 - 8", "err"); return; }
-        state.selection = list; state.mode = "iface"; return;
-      }
-      if (m(c, "switchport", 4)) {
-        if (state.mode !== "iface") { out("% Сначала выбери порт: interface fa0/1", "err"); return; }
-        var a1 = (w[1] || "").toLowerCase(), a2 = (w[2] || "").toLowerCase();
-        if (m(a1, "mode", 2) && m(a2, "access", 3)) {
-          state.selection.forEach(function (p) { state.ports[p].mode = "access"; });
-          return;
-        }
-        if (m(a1, "access", 3) && m(a2, "vlan", 1)) {
-          var v = parseInt(w[3], 10);
-          if (!v) { out("% Укажи номер VLAN: switchport access vlan 10", "err"); return; }
-          if (!state.vlans[v]) { out("% Access VLAN не существует. Создай его: vlan " + v, "err"); return; }
-          state.selection.forEach(function (p) { state.ports[p].vlan = v; });
-          return;
-        }
-        out("% Поддерживаются: switchport mode access | switchport access vlan <номер>", "err");
+      if (m(a1, "trunk", 2) && m(a2, "allowed", 3)) {
+        var arg = w.slice(3).join(" ").toLowerCase(), add = false;
+        if (arg.indexOf("vlan") === 0) { arg = arg.slice(4).trim(); }
+        if (arg.indexOf("add") === 0) { add = true; arg = arg.slice(3).trim(); }
+        var vs = vlanList(arg);
+        if (!vs.length) { out("% Укажи VLAN: switchport trunk allowed vlan 10,20", "err"); return; }
+        st.sel.forEach(function (k) {
+          var p = d.ports[k];
+          p.allowed = add && p.allowed ? p.allowed.concat(vs.filter(function (x) { return p.allowed.indexOf(x) < 0; })) : vs;
+        });
         return;
       }
-      if (m(c, "no", 2)) { out("% Отмена команд в тренажёре не поддержана — нажми «Сбросить», если запутался.", "err"); return; }
+      if (m(a1, "trunk", 2) && m(a2, "native", 3)) {
+        var nv = parseInt(w[4], 10);
+        if (!nv) { out("% Укажи VLAN: switchport trunk native vlan 999", "err"); return; }
+        st.sel.forEach(function (k) { d.ports[k].native = nv; }); return;
+      }
+      if (m(a1, "port-security", 4)) {
+        var max = 1;
+        if (m((w[2] || "").toLowerCase(), "maximum", 3)) { max = parseInt(w[3], 10) || 1; }
+        st.sel.forEach(function (k) { d.ports[k].portsec = max; });
+        return;
+      }
+      out("% Поддерживаются: switchport mode access|trunk · switchport access vlan N · switchport trunk allowed vlan N,M · switchport trunk native vlan N · switchport port-security maximum N", "err");
+      return;
     }
 
-    if (state.mode === "user") { out("% Сначала войди в режим администратора: enable", "err"); return; }
-    if (state.mode === "priv") { out("% Настройка выполняется после команды configure terminal", "err"); return; }
+    if (st.mode === "iface" && m(c, "encapsulation", 5)) {
+      if (!st.ifCtx || !st.ifCtx.rif) { out("% Команда применяется на подинтерфейсе маршрутизатора", "err"); return; }
+      var ev = parseInt(w[2], 10);
+      if (!/dot1q/i.test(w[1] || "") || !ev) { out("% Формат: encapsulation dot1q 10", "err"); return; }
+      d.ifaces[st.ifCtx.rif].vlan = ev; d.ifaces[st.ifCtx.rif].sub = true;
+      return;
+    }
+
+    if (st.mode === "iface" && m(c, "ip", 2) && m((w[1] || "").toLowerCase(), "address", 3)) {
+      var ip = w[2], mask = w[3] || "255.255.255.0";
+      if (!/^\d+\.\d+\.\d+\.\d+$/.test(ip || "")) { out("% Формат: ip address 192.168.10.1 255.255.255.0", "err"); return; }
+      if (st.ifCtx && st.ifCtx.rif) { d.ifaces[st.ifCtx.rif].ip = ip; d.ifaces[st.ifCtx.rif].mask = mask; return; }
+      if (st.ifCtx && st.ifCtx.svi) { d.svi[st.ifCtx.svi] = { ip: ip, mask: mask }; return; }
+      out("% Адрес назначается на интерфейс VLAN (коммутатор) или на интерфейс маршрутизатора", "err");
+      return;
+    }
+
+    if (st.mode === "iface" && m(c, "ip", 2) && m((w[1] || "").toLowerCase(), "access-group", 3)) {
+      var an = parseInt(w[2], 10);
+      if (!st.ifCtx || !st.ifCtx.rif) { out("% Список применяется на интерфейсе маршрутизатора", "err"); return; }
+      if (!d.acls[an]) { out("% Список доступа " + an + " не создан", "err"); return; }
+      d.ifaces[st.ifCtx.rif].acl = an; return;
+    }
+
+    if (m(c, "access-list", 6) && st.mode === "config" && d.type === "router") {
+      var num = parseInt(w[1], 10), act = (w[2] || "").toLowerCase();
+      if (!num || ["permit", "deny"].indexOf(act) < 0) { out("% Формат: access-list 110 deny ip 192.168.30.0 0.0.0.255 192.168.10.0 0.0.0.255", "err"); return; }
+      var rest2 = w.slice(3).join(" ").replace(/^ip\s+/i, "").trim();
+      var parts = rest2.split(/\s+/), src = "any", dst = "any";
+      if (parts[0] === "any") { src = "any"; parts = parts.slice(1); }
+      else if (parts.length >= 2) { src = subnetOf(parts[0]); parts = parts.slice(2); }
+      if (parts[0] === "any") { dst = "any"; }
+      else if (parts.length >= 2) { dst = subnetOf(parts[0]); }
+      d.acls[num] = d.acls[num] || [];
+      d.acls[num].push({ action: act, src: src, dst: dst });
+      return;
+    }
+
+    if (m(c, "shutdown", 4) && st.mode === "iface") {
+      st.sel.forEach(function (k) { d.ports[k].up = false; });
+      if (st.ifCtx && st.ifCtx.rif) { d.ifaces[st.ifCtx.rif].up = false; }
+      return;
+    }
+    if (c === "no" && m((w[1] || "").toLowerCase(), "shutdown", 4) && st.mode === "iface") {
+      st.sel.forEach(function (k) { d.ports[k].up = true; });
+      if (st.ifCtx && st.ifCtx.rif) { d.ifaces[st.ifCtx.rif].up = true; }
+      return;
+    }
+    if (c === "no") { out("% Из отменяющих команд поддержана только no shutdown. Нажми «Сбросить настройки», если нужно начать заново.", "err"); return; }
+    if (m(c, "description", 4)) { return; }
+
     out("% Неизвестная команда: " + line, "err");
   }
 
-  /* ---------- ping ---------- */
-  function portOf(pc) { return state.ports[pc.port]; }
-  function subnet(ip) { return ip.split(".").slice(0, 3).join("."); }
+  /* ======================= схема ======================= */
 
-  function ping() {
-    var src = PCS[document.getElementById("src").selectedIndex];
-    var dst = PCS[document.getElementById("dst").selectedIndex];
-    var box = document.getElementById("ping-out");
-    if (src === dst) { box.textContent = "Выбери разные компьютеры."; return; }
-
-    var sameSubnet = subnet(src.ip) === subnet(dst.ip);
-    var sameVlan = portOf(src).vlan === portOf(dst).vlan;
-    var head = src.name + "> ping " + dst.ip + "\n\n";
-
-    if (!sameSubnet) {
-      box.textContent = head +
-        "Pinging " + dst.ip + " with 32 bytes of data:\n" +
-        "Reply from " + subnet(src.ip) + ".1: Destination host unreachable.\n".repeat(1) +
-        "Request timed out.\nRequest timed out.\nRequest timed out.\n\n" +
-        "Packets: Sent = 4, Received = 0, Lost = 4 (100% loss)\n\n" +
-        "▸ Причина: адреса в разных подсетях (" + subnet(src.ip) + ".0 и " + subnet(dst.ip) + ".0).\n" +
-        "  Пакет нужно передать шлюзу, а маршрутизатора в схеме пока нет.\n" +
-        (sameVlan ? "  VLAN у портов одинаковый — на втором уровне связь есть." :
-                    "  Плюс порты в разных VLAN: кадр и так не вышел бы за пределы VLAN " + portOf(src).vlan + ".");
-      if (!sameVlan) { state.pinged.cross = true; checkTasks(); }
-      return;
-    }
-
-    if (!sameVlan) {
-      box.textContent = head +
-        "Pinging " + dst.ip + " with 32 bytes of data:\n" +
-        "Request timed out.\nRequest timed out.\nRequest timed out.\nRequest timed out.\n\n" +
-        "Packets: Sent = 4, Received = 0, Lost = 4 (100% loss)\n\n" +
-        "▸ Причина: порт " + src.port + " в VLAN " + portOf(src).vlan +
-        ", порт " + dst.port + " в VLAN " + portOf(dst).vlan + ".\n" +
-        "  Коммутатор не передаёт кадры между разными VLAN.";
-      state.pinged.cross = true; checkTasks();
-      return;
-    }
-
-    box.textContent = head +
-      "Pinging " + dst.ip + " with 32 bytes of data:\n" +
-      "Reply from " + dst.ip + ": bytes=32 time<1ms TTL=128\n".repeat(4) + "\n" +
-      "Packets: Sent = 4, Received = 4, Lost = 0 (0% loss)\n\n" +
-      "▸ Связь есть: оба порта в VLAN " + portOf(src).vlan + " и в одной подсети.";
-    state.pinged.same = true; checkTasks();
+  var NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs) {
+    var e = document.createElementNS(NS, tag);
+    Object.keys(attrs).forEach(function (k) { e.setAttribute(k, attrs[k]); });
+    return e;
+  }
+  function vlanColor(v) {
+    return v === 10 ? "var(--v10)" : v === 20 ? "var(--v20)" : v === 30 ? "var(--v30)" :
+           v === 99 ? "var(--v99)" : "var(--v1)";
   }
 
-  /* ---------- задание ---------- */
-  var TASKS = [
-    { text: "Создать <b>VLAN 10 (BUH)</b>, <b>20 (IT)</b> и <b>30 (GUEST)</b>", test: function () {
-        return state.vlans[10] === "BUH" && state.vlans[20] === "IT" && state.vlans[30] === "GUEST"; } },
-    { text: "Назначить порты: <b>Fa0/1–8 → VLAN 10</b>, <b>Fa0/9–16 → VLAN 20</b>, <b>Fa0/17–20 → VLAN 30</b>", test: function () {
-        for (var i = 1; i <= 20; i++) {
-          var want = i <= 8 ? 10 : (i <= 16 ? 20 : 30);
-          if (state.ports["fa0/" + i].vlan !== want || state.ports["fa0/" + i].mode !== "access") { return false; }
-        }
-        return true; } },
-    { text: "Посмотреть распределение портов: <code>show vlan brief</code>", manual: true },
-    { text: "Проверить связь <b>внутри отдела</b> (PC-BUH1 → PC-BUH2) — должна работать", test: function () { return state.pinged.same; } },
-    { text: "Проверить связь <b>между отделами</b> (PC-BUH1 → PC-IT1) — должна пропасть", test: function () { return state.pinged.cross; } },
-    { text: "Сохранить конфигурацию: <code>write memory</code>", test: function () { return state.saved; } }
-  ];
-  var manualDone = {};
-  function markTask(i) { manualDone[i] = true; checkTasks(); }
+  function draw() {
+    var svg = document.getElementById("svg");
+    svg.innerHTML = "";
+    var W = 640, devNames = Object.keys(net.devices);
+    var switches = devNames.filter(function (n) { return net.devices[n].type === "switch"; });
+    var routers = devNames.filter(function (n) { return net.devices[n].type === "router"; });
+    var pos = {};
+
+    routers.forEach(function (n, i) {
+      pos[n] = { x: W / 2, y: 40, w: 110, h: 32 };
+    });
+    var swY = routers.length ? 130 : 70;
+    switches.forEach(function (n, i) {
+      pos[n] = { x: W * (i + 1) / (switches.length + 1), y: swY, w: 104, h: 32 };
+    });
+
+    // линии между устройствами
+    net.links.forEach(function (l) {
+      var A = pos[l.a[0]], B = pos[l.b[0]];
+      if (!A || !B) { return; }
+      var pa = net.devices[l.a[0]].type === "switch" ? net.devices[l.a[0]].ports[l.a[1]] : null;
+      var isTrunk = pa && pa.mode === "trunk";
+      svg.appendChild(el("path", {
+        d: "M " + A.x + " " + (A.y + 16) + " L " + A.x + " " + ((A.y + B.y) / 2) +
+           " L " + B.x + " " + ((A.y + B.y) / 2) + " L " + B.x + " " + (B.y - 16),
+        fill: "none", stroke: isTrunk ? "var(--accent)" : "var(--line)",
+        "stroke-width": isTrunk ? 2.6 : 1.8, "stroke-dasharray": isTrunk ? "none" : "4 4"
+      }));
+      var lbl = el("text", { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2 - 6, "text-anchor": "middle",
+        "font-family": "var(--font-mono)", "font-size": 10, fill: isTrunk ? "var(--accent)" : "var(--muted)" });
+      lbl.textContent = isTrunk ? "транк " + l.a[1] + " ↔ " + l.b[1] : "порт " + l.a[1] + " (не транк)";
+      svg.appendChild(lbl);
+    });
+
+    // рабочие станции
+    var perDev = {};
+    net.pcs.forEach(function (p) { (perDev[p.dev] = perDev[p.dev] || []).push(p); });
+    Object.keys(perDev).forEach(function (dn) {
+      var list = perDev[dn], base = pos[dn];
+      if (!base) { return; }
+      var slot = Math.min(150, (W - 40) / list.length);
+      var startX = base.x - slot * (list.length - 1) / 2;
+      list.forEach(function (p, i) {
+        var x = Math.max(66, Math.min(W - 66, startX + slot * i)), y = base.y + 120;
+        var port = net.devices[dn].ports[p.port];
+        var v = port.mode === "access" ? port.vlan : 1;
+        var color = port.up ? vlanColor(v) : "var(--bad)";
+        svg.appendChild(el("path", { d: "M " + base.x + " " + (base.y + 16) + " L " + base.x + " " + (y - 42) +
+          " L " + x + " " + (y - 42) + " L " + x + " " + (y - 16), fill: "none", stroke: color, "stroke-width": 2 }));
+        var g = el("g", {});
+        g.appendChild(el("rect", { x: x - 62, y: y - 16, width: 124, height: 46, rx: 6,
+          fill: "var(--surface-2)", stroke: color, "stroke-width": 1.5 }));
+        [[p.name, 11.5, -1, "var(--ink)"], [p.ip, 10.5, 12, "var(--muted)"],
+         [p.port.replace("fa", "Fa") + " · " + (port.up ? (port.mode === "access" ? "VLAN " + v : port.mode) : "shutdown"), 10, 25, color]]
+          .forEach(function (t) {
+            var tx = el("text", { x: x, y: y + t[2], "text-anchor": "middle", "font-family": "var(--font-mono)",
+              "font-size": t[1], fill: t[3] });
+            tx.textContent = t[0];
+            g.appendChild(tx);
+          });
+        svg.appendChild(g);
+      });
+    });
+
+    // сами устройства
+    Object.keys(pos).forEach(function (n) {
+      var p = pos[n], d = net.devices[n], isCur = n === current;
+      var g = el("g", { style: "cursor:pointer" });
+      g.appendChild(el("rect", { x: p.x - p.w / 2, y: p.y - p.h / 2, width: p.w, height: p.h, rx: 7,
+        fill: "var(--surface-2)", stroke: isCur ? "var(--accent)" : "var(--line)", "stroke-width": isCur ? 2.4 : 1.4 }));
+      var t1 = el("text", { x: p.x, y: p.y + 4, "text-anchor": "middle", "font-family": "var(--font-mono)",
+        "font-size": 12, "font-weight": 600, fill: "var(--ink)" });
+      t1.textContent = d.hostname;
+      g.appendChild(t1);
+      var t2 = el("text", { x: p.x, y: p.y + p.h / 2 + 12, "text-anchor": "middle", "font-family": "var(--font-mono)",
+        "font-size": 9.5, fill: "var(--muted)" });
+      t2.textContent = d.type === "router" ? "маршрутизатор" : "коммутатор";
+      g.appendChild(t2);
+      g.addEventListener("click", function () { switchDevice(n); });
+      svg.appendChild(g);
+    });
+
+    var maxY = 0;
+    Object.keys(perDev).forEach(function (dn) { if (pos[dn]) { maxY = Math.max(maxY, pos[dn].y + 120 + 40); } });
+    svg.setAttribute("viewBox", "0 0 " + W + " " + Math.max(230, maxY + 10));
+
+    var used = {};
+    net.pcs.forEach(function (p) {
+      var port = net.devices[p.dev].ports[p.port];
+      used[port.mode === "access" ? port.vlan : 1] = true;
+    });
+    document.getElementById("legend").innerHTML = Object.keys(used).map(function (v) {
+      return '<span><i class="dot" style="background:' + vlanColor(Number(v)) + '"></i> VLAN ' + v + "</span>";
+    }).join("") + '<span><svg width="24" height="8" aria-hidden="true"><line x1="0" y1="4" x2="24" y2="4" stroke="var(--accent)" stroke-width="2.4"></line></svg> транк настроен</span>';
+  }
+
+  /* ======================= интерфейс ======================= */
+
+  function switchDevice(name) {
+    current = name;
+    Array.prototype.forEach.call(document.querySelectorAll("#dev-tabs button"), function (b) {
+      b.setAttribute("aria-pressed", String(b.dataset.dev === name));
+    });
+    out("--- консоль устройства " + net.devices[name].hostname + " ---", "echo");
+    refresh();
+  }
+
+  function refresh() {
+    document.getElementById("prompt").textContent = prompt();
+    draw();
+    checkTasks();
+  }
 
   function checkTasks() {
     var done = 0;
-    TASKS.forEach(function (t, i) {
-      var ok = t.manual ? !!manualDone[i] : t.test();
+    scen.tasks.forEach(function (t, i) {
+      var ok = false;
+      try { ok = !!t.test(net); } catch (e) { ok = false; }   // строго булево: toggle(..., undefined) переключает вслепую
       if (ok) { done++; }
       var li = document.getElementById("task-" + i);
       if (li) { li.classList.toggle("done", ok); }
     });
-    document.getElementById("progress").textContent = done + " / " + TASKS.length;
-    var hint = document.getElementById("hint");
-    if (done === TASKS.length) {
-      hint.innerHTML = "<b>Задание выполнено.</b> Отделы изолированы на втором уровне. Дальше — маршрутизатор: он вернёт связь между VLAN, но уже под контролем правил.";
+    document.getElementById("progress").textContent = done + " / " + scen.tasks.length;
+    if (done === scen.tasks.length) {
+      document.getElementById("hint").innerHTML = "<b>Задание выполнено.</b> Нажми «Новое задание», чтобы взять следующую сеть, или посмотри итог командой <code>show running-config</code>.";
     }
-    drawLinks();
   }
 
-  /* ---------- схема ---------- */
-  function vlanColor(v) { return v === 10 ? "var(--v10)" : v === 20 ? "var(--v20)" : v === 30 ? "var(--v30)" : "var(--v1)"; }
-
-  function drawHosts() {
-    var g = document.getElementById("hosts");
-    g.innerHTML = PCS.map(function (pc) {
-      var x = pc.x;
-      return '<g>' +
-        '<rect x="' + x + '" y="200" width="118" height="62" rx="8" fill="var(--surface-2)" stroke="var(--line)"></rect>' +
-        '<text x="' + (x + 59) + '" y="221" text-anchor="middle" font-family="var(--font-mono)" font-size="11.5" font-weight="600" fill="var(--ink)">' + pc.name + '</text>' +
-        '<text x="' + (x + 59) + '" y="237" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--muted)">' + pc.ip + '</text>' +
-        '<text x="' + (x + 59) + '" y="252" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--muted)">' + pc.port.replace("fa", "Fa") + '</text>' +
-        '</g>';
+  function renderScenario() {
+    document.getElementById("scen-name").textContent = scen.name;
+    document.getElementById("scen-diff").textContent =
+      scen.diff === "easy" ? "лёгкий" : scen.diff === "medium" ? "средний" : "сложный";
+    document.getElementById("scen-goal").textContent = scen.goal;
+    document.getElementById("hint").innerHTML = scen.hint;
+    document.getElementById("tasks").innerHTML = scen.tasks.map(function (t, i) {
+      return '<li id="task-' + i + '"><span class="check" aria-hidden="true">✓</span><span class="task-text">' + t.t + "</span></li>";
     }).join("");
-  }
-
-  function drawLinks() {
-    var g = document.getElementById("links");
-    g.innerHTML = PCS.map(function (pc) {
-      var v = state.ports[pc.port].vlan, color = vlanColor(v), x = pc.x + 59;
-      return '<path d="M 280 70 L 280 140 L ' + x + ' 160 L ' + x + ' 200" stroke="' + color + '"></path>' +
-        '<text x="' + (x + 6) + '" y="182" font-family="var(--font-mono)" font-size="10" fill="' + color + '">VLAN ' + v + '</text>';
+    document.getElementById("dev-tabs").innerHTML = Object.keys(net.devices).map(function (n) {
+      return '<button type="button" data-dev="' + n + '" aria-pressed="' + (n === current) + '">' + n + "</button>";
     }).join("");
+    Array.prototype.forEach.call(document.querySelectorAll("#dev-tabs button"), function (b) {
+      b.addEventListener("click", function () { switchDevice(b.dataset.dev); });
+    });
+    ["src", "dst"].forEach(function (id, n) {
+      var sel = document.getElementById(id);
+      sel.innerHTML = net.pcs.map(function (p) { return "<option>" + p.name + "</option>"; }).join("");
+      sel.selectedIndex = Math.min(n, net.pcs.length - 1);
+    });
+    document.getElementById("ping-out").textContent = "Выбери два узла и нажми ping.";
+    document.getElementById("scen-note").textContent = "устройств: " + Object.keys(net.devices).length + " · узлов: " + net.pcs.length;
   }
 
-  function drawTasks() {
-    document.getElementById("tasks").innerHTML = TASKS.map(function (t, i) {
-      return '<li id="task-' + i + '"><span class="check" aria-hidden="true">✓</span><span class="task-text">' + t.text + '</span></li>';
-    }).join("");
+  function startScenario(s) {
+    build(s);
+    term.innerHTML = "";
+    out("Сетевой симулятор. Задание: " + s.name + "\nПереключай устройства вкладками или кликом по схеме. Команды — в шпаргалке.\n", "echo");
+    renderScenario();
+    refresh();
   }
 
-  /* ---------- запуск ---------- */
-  function boot(keepTerm) {
-    state = freshState();
-    manualDone = {};
-    if (!keepTerm) {
-      term.innerHTML = "";
-      out("Тренажёр коммутатора Cisco 2960. Введите ? для подсказки.\n", "echo");
-      out("Switch>");
-    }
-    refreshPrompt();
-    drawHosts();
-    drawLinks();
+  function newScenario() {
+    var lvl = document.getElementById("level").value;
+    var pool = SCENARIOS.filter(function (s) { return lvl === "any" || s.diff === lvl; });
+    var fresh = pool.filter(function (s) { return !scen || s.id !== scen.id; });
+    startScenario((fresh.length ? fresh : pool)[Math.floor(Math.random() * (fresh.length ? fresh.length : pool.length))]);
+  }
+
+  /* ---- ping ---- */
+  document.getElementById("ping-btn").addEventListener("click", function () {
+    var r = doPing(document.getElementById("src").value, document.getElementById("dst").value);
+    document.getElementById("ping-out").textContent = r.lines;
+    var a = pcByName(document.getElementById("src").value), b = pcByName(document.getElementById("dst").value);
+    if (!a || !b) { return; }
+    if (r.ok && !r.routed && a.dev === b.dev) { net.done.sameOk = true; }
+    if (r.ok && !r.routed && a.dev !== b.dev) { net.done.trunkOk = true; }
+    if (r.ok && r.routed) { net.done.routeOk = true; if (/SRV/i.test(b.name)) { net.done.srvOk = true; } }
+    if (!r.ok && !sameSubnet(a.ip, b.ip) && r.acl) { net.done.aclBlocked = true; }
+    if (!r.ok && sameSubnet(a.ip, b.ip) === false && !r.acl) { /* прочие отказы */ }
+    if (!r.ok && sameSubnet(a.ip, b.ip) && a.vlanHint !== b.vlanHint) { net.done.crossFail = true; }
+    if (!r.ok && /гост/i.test(a.name) && /гост/i.test(b.name)) { net.done.guestDown = false; }
+    if (r.ok && /гост/i.test(a.name) && /гост/i.test(b.name)) { net.done.guestOk = true; }
+    if (!r.ok && /гост/i.test(a.name) && r.lines.indexOf("shutdown") >= 0) { net.done.guestDown = true; }
+    if (!r.ok && /гост/i.test(b.name) && r.lines.indexOf("выключен") >= 0) { net.done.guestDown = true; }
     checkTasks();
-  }
-
-  ["src", "dst"].forEach(function (id, n) {
-    var sel = document.getElementById(id);
-    sel.innerHTML = PCS.map(function (pc) { return '<option>' + pc.name + '</option>'; }).join("");
-    sel.selectedIndex = n === 0 ? 0 : 1;
   });
 
+  /* ---- консоль ---- */
   document.getElementById("cli-form").addEventListener("submit", function (e) {
     e.preventDefault();
     var input = document.getElementById("cli"), value = input.value;
     out(prompt() + " " + value, "echo");
+    if (value.trim()) { history.push(value); histIdx = history.length; }
     input.value = "";
     run(value);
-    refreshPrompt();
-    checkTasks();
+    refresh();
   });
-  document.getElementById("ping-btn").addEventListener("click", ping);
-  document.getElementById("reset").addEventListener("click", function () { boot(false); });
-  document.getElementById("theme").addEventListener("click", function () {
-    var dark = document.documentElement.getAttribute("data-theme") === "dark";
-    var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    var cur = document.documentElement.getAttribute("data-theme") || (prefersDark ? "dark" : "light");
-    document.documentElement.setAttribute("data-theme", cur === "dark" ? "light" : "dark");
-    void dark;
+  document.getElementById("cli").addEventListener("keydown", function (e) {
+    if (e.key === "ArrowUp" && histIdx > 0) { histIdx--; this.value = history[histIdx]; e.preventDefault(); }
+    if (e.key === "ArrowDown") { histIdx = Math.min(history.length, histIdx + 1); this.value = history[histIdx] || ""; e.preventDefault(); }
   });
 
-  boot(false);
+  document.getElementById("new-task").addEventListener("click", newScenario);
+  document.getElementById("reset").addEventListener("click", function () { startScenario(scen); });
+  document.getElementById("level").addEventListener("change", newScenario);
+  document.getElementById("theme").addEventListener("click", function () {
+    var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    var c = document.documentElement.getAttribute("data-theme") || (prefersDark ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", c === "dark" ? "light" : "dark");
+  });
+
+  /* ---- шпаргалка ---- */
+  var CHEAT = [
+    ["Режимы доступа", [
+      ["enable", "войти в режим администратора (SW>  →  SW#)"],
+      ["configure terminal", "войти в режим настройки (SW(config)#)"],
+      ["exit", "выйти на уровень назад"],
+      ["end", "выйти сразу в режим администратора"],
+      ["hostname SW1", "задать имя устройства"],
+      ["write memory", "сохранить конфигурацию"]
+    ]],
+    ["VLAN на коммутаторе", [
+      ["vlan 10", "создать VLAN 10 и войти в его настройки"],
+      ["name BUH", "задать имя VLAN"],
+      ["interface fa0/1", "выбрать один порт"],
+      ["interface range fa0/1 - 4", "выбрать диапазон портов"],
+      ["switchport mode access", "порт для конечного устройства"],
+      ["switchport access vlan 10", "отдать порт в VLAN 10"]
+    ]],
+    ["Транк между устройствами", [
+      ["switchport mode trunk", "перевести порт в режим транка"],
+      ["switchport trunk allowed vlan 10,20", "разрешить только эти VLAN"],
+      ["switchport trunk allowed vlan add 30", "добавить VLAN к уже разрешённым"],
+      ["switchport trunk native vlan 999", "сменить native VLAN (защита от double tagging)"]
+    ]],
+    ["Защита портов и управление", [
+      ["switchport port-security maximum 1", "разрешить на порту один MAC-адрес"],
+      ["shutdown", "выключить порт"],
+      ["no shutdown", "включить порт"],
+      ["interface vlan 99", "интерфейс управления коммутатором"],
+      ["ip address 192.168.99.10 255.255.255.0", "адрес управления или шлюза"]
+    ]],
+    ["Маршрутизатор", [
+      ["interface gi0/0", "физический интерфейс"],
+      ["no shutdown", "поднять интерфейс (по умолчанию выключен)"],
+      ["interface gi0/0.10", "подинтерфейс для VLAN 10"],
+      ["encapsulation dot1q 10", "привязать подинтерфейс к VLAN 10"],
+      ["ip address 192.168.10.1 255.255.255.0", "адрес шлюза для этой сети"]
+    ]],
+    ["Списки доступа", [
+      ["access-list 110 deny ip 192.168.30.0 0.0.0.255 192.168.10.0 0.0.0.255", "запретить трафик между сетями"],
+      ["access-list 110 permit ip any any", "разрешить остальное (иначе запрещено всё)"],
+      ["ip access-group 110 in", "применить список на интерфейсе, входящий трафик"]
+    ]],
+    ["Проверка", [
+      ["show vlan brief", "какие порты в каком VLAN"],
+      ["show interfaces trunk", "какие порты транки и что на них разрешено"],
+      ["show ip interface brief", "адреса и состояние интерфейсов"],
+      ["show ip route", "таблица маршрутизации"],
+      ["show running-config", "текущая конфигурация целиком"]
+    ]]
+  ];
+  document.getElementById("cheat-body").innerHTML = CHEAT.map(function (g) {
+    return '<div class="cheat-group"><h4>' + g[0] + "</h4><ul>" + g[1].map(function (r) {
+      return "<li><code>" + r[0] + "</code><span>" + r[1] + "</span></li>";
+    }).join("") + "</ul></div>";
+  }).join("");
+
+  startScenario(SCENARIOS[0]);
 })();
 </script>
