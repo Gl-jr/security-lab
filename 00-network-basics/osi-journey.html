@@ -1,0 +1,300 @@
+<title>Путь пакета по уровням</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    --bg: #eef1ee; --surface: #ffffff; --surface-2: #f6f8f6; --line: #d3dbd6;
+    --ink: #14201c; --muted: #5c6b64; --accent: #0d6e64; --accent-soft: #d9ece9;
+    --ok: #16794f; --bad: #b3261e; --warn: #a9560a;
+    --l7: #6b3fc4; --l4: #0f62c4; --l3: #0d6e64; --l2: #a9560a; --l1: #5c6b64;
+    --radius: 10px;
+    --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0d1412; --surface: #141d1a; --surface-2: #19241f; --line: #27352f;
+      --ink: #e4ece8; --muted: #94a69e; --accent: #38c2ae; --accent-soft: #14312c;
+      --ok: #4cc38a; --bad: #f26d63; --warn: #e09a4e;
+      --l7: #a98bf0; --l4: #6aa8f5; --l3: #38c2ae; --l2: #e09a4e; --l1: #94a69e;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0d1412; --surface: #141d1a; --surface-2: #19241f; --line: #27352f;
+    --ink: #e4ece8; --muted: #94a69e; --accent: #38c2ae; --accent-soft: #14312c;
+    --ok: #4cc38a; --bad: #f26d63; --warn: #e09a4e;
+    --l7: #a98bf0; --l4: #6aa8f5; --l3: #38c2ae; --l2: #e09a4e; --l1: #94a69e;
+  }
+
+  body { background: var(--bg); color: var(--ink); font-family: var(--font-sans); font-size: 15px; line-height: 1.55; margin: 0; }
+  .wrap { max-width: 1160px; margin: 0 auto; padding-inline: 16px; padding-block: 26px 56px; }
+  header.top { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: flex-end; justify-content: space-between; margin-bottom: 20px; }
+  .eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 0 0 4px; }
+  h1 { font-size: clamp(23px, 4vw, 32px); line-height: 1.12; margin: 0; font-weight: 700; letter-spacing: -.015em; text-wrap: balance; }
+  .sub { color: var(--muted); margin: 8px 0 0; max-width: 64ch; }
+  .btn { font-family: var(--font-sans); font-size: 13.5px; font-weight: 500; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 8px 13px; cursor: pointer; }
+  .btn:hover { border-color: var(--accent); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  :root[data-theme="dark"] .btn.primary, :root:not([data-theme="light"]) .btn.primary { color: #06120f; }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+  .panel + .panel { margin-top: 16px; }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 16px; border-bottom: 1px solid var(--line); }
+  .panel-head h2 { font-size: 12.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; margin: 0; color: var(--muted); font-family: var(--font-mono); }
+  .panel-body { padding: 16px; }
+  .grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+  @media (max-width: 940px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+  /* маршрут */
+  .route { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 14px 16px 6px; }
+  .hopbox { flex: 1; text-align: center; font-family: var(--font-mono); font-size: 11.5px; padding: 8px 4px; border: 1px solid var(--line); border-radius: 7px; color: var(--muted); background: var(--surface-2); }
+  .hopbox.active { border-color: var(--accent); color: var(--ink); box-shadow: inset 0 0 0 1px var(--accent); }
+  .arrow { color: var(--muted); font-family: var(--font-mono); }
+
+  /* стопка заголовков */
+  .stack { display: flex; flex-direction: column; gap: 6px; padding: 4px 16px 16px; }
+  .hdr { display: grid; grid-template-columns: 74px minmax(0, 1fr); align-items: stretch; border-radius: 7px; overflow: hidden; border: 1px solid var(--line); background: var(--surface-2); }
+  .hdr .tag { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .04em; display: flex; align-items: center; justify-content: center; color: #fff; padding: 6px 4px; text-align: center; }
+  :root[data-theme="dark"] .hdr .tag, :root:not([data-theme="light"]) .hdr .tag { color: #06120f; }
+  .hdr .fields { padding: 7px 10px; font-family: var(--font-mono); font-size: 12px; display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; }
+  .hdr .fields b { font-weight: 500; color: var(--muted); }
+  .hdr.new { animation: pop .35s ease; }
+  .hdr.changed { box-shadow: inset 0 0 0 2px var(--warn); }
+  .hdr.dropped { opacity: .4; text-decoration: line-through; }
+  @keyframes pop { from { transform: translateY(-6px); opacity: 0; } to { transform: none; opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .hdr.new { animation: none; } }
+
+  .step-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+  .step-n { font-family: var(--font-mono); font-size: 11px; color: var(--muted); letter-spacing: .1em; }
+  .step-title { font-size: 17px; font-weight: 600; margin: 0; line-height: 1.3; }
+  .step-body { margin: 8px 0 0; }
+  .who { display: inline-block; font-family: var(--font-mono); font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); color: var(--muted); }
+  .sec { margin-top: 14px; padding: 12px 14px; border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 6px 6px 0; font-size: 13.5px; }
+  .sec b { font-weight: 600; }
+  .controls { display: flex; gap: 8px; align-items: center; margin-top: 16px; flex-wrap: wrap; }
+  .progress { font-family: var(--font-mono); font-size: 12px; color: var(--muted); margin-left: auto; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  .scroll { overflow-x: auto; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+  td.lvl { font-family: var(--font-mono); white-space: nowrap; font-weight: 500; }
+  .foot { margin-top: 24px; color: var(--muted); font-size: 13px; max-width: 74ch; }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Сети с нуля · шаг 2</p>
+      <h1>Путь пакета по уровням</h1>
+      <p class="sub">Бухгалтер открывает отчёт на сервере 1С. Проследи шаг за шагом, как запрос обрастает заголовками, что меняет каждое устройство по дороге и где работает защита.</p>
+    </div>
+    <button class="btn" id="theme" type="button">Сменить тему</button>
+  </header>
+
+  <div class="grid">
+    <div>
+      <section class="panel">
+        <div class="panel-head"><h2>Маршрут</h2><span id="unit" style="font-family:var(--font-mono);font-size:11.5px;color:var(--muted)"></span></div>
+        <div class="route" id="route"></div>
+        <div class="stack" id="stack"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>Уровни: кто что читает и что там ломают</h2></div>
+        <div class="panel-body scroll">
+          <table>
+            <thead><tr><th>Уровень</th><th>Единица данных</th><th>Адрес</th><th>Устройство</th><th>Типичная атака</th></tr></thead>
+            <tbody id="layers"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <div>
+      <section class="panel">
+        <div class="panel-head"><h2>Что происходит</h2><span class="who" id="who"></span></div>
+        <div class="panel-body">
+          <div class="step-head">
+            <span class="step-n" id="step-n"></span>
+          </div>
+          <h3 class="step-title" id="step-title"></h3>
+          <p class="step-body" id="step-body"></p>
+          <div class="sec" id="step-sec"></div>
+          <div class="controls">
+            <button class="btn" id="prev" type="button">← Назад</button>
+            <button class="btn primary" id="next" type="button">Дальше →</button>
+            <button class="btn" id="restart" type="button">С начала</button>
+            <span class="progress" id="progress"></span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <p class="foot">Главное, что стоит вынести: IP-адрес назначения не меняется от начала до конца пути, а MAC-адрес переписывается на каждом участке. Именно поэтому коммутатор не может отправить кадр в другую сеть, а маршрутизатор может.</p>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var PC = { ip: "192.168.10.25", mac: "AC:14:02:11:8B:6D" };
+  var GW = { ip: "192.168.10.1", mac: "00:1B:0D:63:C2:26" };
+  var SRV = { ip: "10.20.0.8", mac: "00:50:56:A1:07:4E" };
+  var RTR2 = { mac: "00:1B:0D:63:C2:27" };
+
+  /* Заголовки: каждый шаг описывает, из чего состоит блок данных в этот момент */
+  function H(layer, name, fields, state) {
+    return { layer: layer, name: name, fields: fields, state: state || "" };
+  }
+
+  var HTTP = H("L7", "HTTP", [["метод", "GET /report.pdf"], ["Host", "1c.corp.local"]]);
+  function TLS(state) { return H("L7", "TLS", [["запись", "Application Data"], ["содержимое", "зашифровано"]], state); }
+  function TCP(state) { return H("L4", "TCP", [["порт отпр.", "51544"], ["порт назн.", "443"], ["флаги", "PSH, ACK"]], state); }
+  function IP(ttl, state) { return H("L3", "IP", [["отправитель", PC.ip], ["получатель", SRV.ip], ["TTL", String(ttl)]], state); }
+  function ETH(src, dst, state) { return H("L2", "Ethernet", [["MAC отпр.", src], ["MAC назн.", dst]], state); }
+  var BITS = H("L1", "Биты", [["среда", "витая пара, 1 Гбит/с"]]);
+
+  var HOPS = ["Компьютер", "Коммутатор", "Маршрутизатор", "Межсетевой экран", "Сервер 1С"];
+
+  var STEPS = [
+    {
+      hop: 0, who: "Компьютер · уровень 7",
+      unit: "данные",
+      title: "Приложение формирует запрос",
+      body: "Программа 1С обращается к серверу: запрос GET /report.pdf к узлу 1c.corp.local. Пока это просто данные — ни адресов, ни портов здесь ещё нет.",
+      sec: "<b>Защита здесь:</b> WAF и NGFW разбирают именно этот уровень: видят метод, адрес страницы и содержимое формы. Твоя первая лабораторная — ровно про него.",
+      stack: [HTTP]
+    },
+    {
+      hop: 0, who: "Компьютер · уровни 5–6",
+      unit: "данные",
+      title: "Сессия и шифрование TLS",
+      body: "Устанавливается защищённая сессия, данные шифруются. Дальше по сети пойдёт не читаемый текст, а шифрованный блок.",
+      sec: "<b>Следствие для ИБ:</b> средства защиты, стоящие дальше, содержимого уже не видят. Чтобы WAF или IPS могли проверять трафик, TLS расшифровывают на них самих или на балансировщике.",
+      stack: [TLS("new"), HTTP]
+    },
+    {
+      hop: 0, who: "Компьютер · уровень 4",
+      unit: "сегмент",
+      title: "Транспорт: добавляется заголовок TCP",
+      body: "Появляются порты: случайный 51544 у отправителя и 443 у получателя — по нему сервер понимает, что это HTTPS. TCP нумерует байты и подтверждает доставку.",
+      sec: "<b>Защита здесь:</b> межсетевой экран фильтрует по портам и следит за состоянием соединений. Открытый наружу порт 3389 — типовая находка при аудите.",
+      stack: [TCP("new"), TLS(), HTTP]
+    },
+    {
+      hop: 0, who: "Компьютер · уровень 3",
+      unit: "пакет",
+      title: "Сеть: добавляется заголовок IP",
+      body: "Указываются IP-адреса отправителя и получателя и время жизни TTL. Компьютер сравнивает адрес сервера со своей маской и понимает: сервер в другой сети, значит, пакет нужно отдать шлюзу.",
+      sec: "<b>Ключевая мысль:</b> эти IP-адреса не изменятся до самого сервера. Всё остальное по дороге переписывается.",
+      stack: [IP(64, "new"), TCP(), TLS(), HTTP]
+    },
+    {
+      hop: 0, who: "Компьютер · уровень 2",
+      unit: "кадр",
+      title: "Канальный уровень: кадр адресуется шлюзу, а не серверу",
+      body: "В MAC-адрес получателя подставляется адрес шлюза, потому что сервер находится в другой сети. MAC-адрес шлюза компьютер узнаёт через ARP-запрос: «у кого адрес 192.168.10.1?».",
+      sec: "<b>Атака здесь:</b> ARP-spoofing. Злоумышленник отвечает на этот запрос своим MAC-адресом, и кадры идут через него. Защита — DHCP snooping вместе с Dynamic ARP Inspection.",
+      stack: [ETH(PC.mac, GW.mac, "new"), IP(64), TCP(), TLS(), HTTP]
+    },
+    {
+      hop: 1, who: "Коммутатор · уровень 2",
+      unit: "кадр",
+      title: "Коммутатор передаёт кадр, не заглядывая в IP",
+      body: "Коммутатор читает только MAC-адрес получателя, находит его в таблице коммутации и отправляет кадр в нужный порт. Заголовки выше он не трогает и IP-адресов не видит.",
+      sec: "<b>Атака здесь:</b> MAC-flooding — переполнение таблицы, после чего коммутатор рассылает кадры во все порты. Защита — port-security.",
+      stack: [ETH(PC.mac, GW.mac), IP(64), TCP(), TLS(), HTTP]
+    },
+    {
+      hop: 2, who: "Маршрутизатор · уровень 3",
+      unit: "пакет",
+      title: "Маршрутизатор снимает кадр и строит новый",
+      body: "Старый заголовок Ethernet отбрасывается. Маршрутизатор смотрит IP получателя, находит маршрут, уменьшает TTL на единицу и упаковывает пакет в новый кадр — уже с MAC-адресами следующего участка.",
+      sec: "<b>Отсюда правило:</b> MAC-адрес живёт только внутри одного участка сети, IP-адрес — на всём пути. Поэтому по MAC нельзя узнать, откуда пришёл трафик из интернета, а по IP можно.",
+      stack: [ETH(RTR2.mac, SRV.mac, "new"), IP(63, "changed"), TCP(), TLS(), HTTP]
+    },
+    {
+      hop: 3, who: "Межсетевой экран · уровни 3–4 (и 7 у NGFW)",
+      unit: "пакет",
+      title: "Межсетевой экран принимает решение",
+      body: "Экран сверяет с правилами адреса и порты: разрешено ли этой сети обращаться к серверу 1С по 443. Правила применяются сверху вниз до первого совпадения, в конце — запрет по умолчанию. NGFW дополнительно разбирает уровень 7, если TLS расшифрован.",
+      sec: "<b>Что записывается в журнал:</b> время, адреса, порты, сработавшее правило и вердикт. Эти записи уходят в SIEM и становятся основой расследования.",
+      stack: [ETH(RTR2.mac, SRV.mac), IP(63), TCP(), TLS(), HTTP]
+    },
+    {
+      hop: 4, who: "Сервер · уровни 2 → 7",
+      unit: "данные",
+      title: "Сервер разворачивает пакет обратно",
+      body: "Сервер снимает заголовки в обратном порядке: кадр, IP, TCP, TLS. По порту 443 он понимает, какой службе отдать данные, и веб-сервер 1С наконец получает исходный запрос GET /report.pdf.",
+      sec: "<b>Вывод:</b> каждый уровень общается со «своим» уровнем на другой стороне. Поэтому и защита строится по уровням: port-security на втором, фильтрация на третьем и четвёртом, WAF на седьмом.",
+      stack: [HTTP]
+    }
+  ];
+
+  var LAYERS = [
+    ["7 · Прикладной", "данные", "URL, имя узла", "WAF, NGFW, прокси", "SQL-инъекция, XSS, подбор паролей"],
+    ["6 · Представления", "данные", "—", "TLS-терминация", "слабые шифры, поддельный сертификат"],
+    ["5 · Сеансовый", "данные", "идентификатор сессии", "балансировщик", "кража сессионных cookie"],
+    ["4 · Транспортный", "сегмент", "порт", "межсетевой экран", "сканирование портов, SYN-флуд"],
+    ["3 · Сетевой", "пакет", "IP-адрес", "маршрутизатор, экран", "подмена адреса, атаки на маршрутизацию"],
+    ["2 · Канальный", "кадр", "MAC-адрес", "коммутатор", "ARP-spoofing, MAC-flooding, атака на STP"],
+    ["1 · Физический", "биты", "—", "кабель, порт", "врезка в кабель, чужое устройство в розетке"]
+  ];
+
+  var idx = 0;
+
+  function colorOf(layer) {
+    return layer === "L7" ? "var(--l7)" : layer === "L4" ? "var(--l4)" :
+           layer === "L3" ? "var(--l3)" : layer === "L2" ? "var(--l2)" : "var(--l1)";
+  }
+
+  function render() {
+    var st = STEPS[idx];
+
+    document.getElementById("route").innerHTML = HOPS.map(function (h, i) {
+      return '<div class="hopbox' + (i === st.hop ? " active" : "") + '">' + h + "</div>" +
+        (i < HOPS.length - 1 ? '<span class="arrow">→</span>' : "");
+    }).join("");
+
+    document.getElementById("stack").innerHTML = st.stack.map(function (h) {
+      return '<div class="hdr ' + h.state + '">' +
+        '<div class="tag" style="background:' + colorOf(h.layer) + '">' + h.name + "</div>" +
+        '<div class="fields">' + h.fields.map(function (f) {
+          return "<span><b>" + f[0] + ":</b> " + f[1] + "</span>";
+        }).join("") + "</div></div>";
+    }).join("") + '<div class="hdr"><div class="tag" style="background:var(--l1)">' + BITS.name +
+      '</div><div class="fields"><span><b>среда:</b> витая пара, 1 Гбит/с</span></div></div>';
+
+    document.getElementById("unit").textContent = "единица данных: " + st.unit;
+    document.getElementById("who").textContent = st.who;
+    document.getElementById("step-n").textContent = "шаг " + (idx + 1);
+    document.getElementById("step-title").textContent = st.title;
+    document.getElementById("step-body").textContent = st.body;
+    document.getElementById("step-sec").innerHTML = st.sec;
+    document.getElementById("progress").textContent = (idx + 1) + " / " + STEPS.length;
+    document.getElementById("prev").disabled = idx === 0;
+    document.getElementById("next").disabled = idx === STEPS.length - 1;
+  }
+
+  document.getElementById("layers").innerHTML = LAYERS.map(function (r) {
+    return "<tr><td class='lvl'>" + r[0] + "</td><td>" + r[1] + "</td><td>" + r[2] +
+      "</td><td>" + r[3] + "</td><td>" + r[4] + "</td></tr>";
+  }).join("");
+
+  document.getElementById("next").addEventListener("click", function () { if (idx < STEPS.length - 1) { idx++; render(); } });
+  document.getElementById("prev").addEventListener("click", function () { if (idx > 0) { idx--; render(); } });
+  document.getElementById("restart").addEventListener("click", function () { idx = 0; render(); });
+  document.getElementById("theme").addEventListener("click", function () {
+    var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    var cur = document.documentElement.getAttribute("data-theme") || (prefersDark ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", cur === "dark" ? "light" : "dark");
+  });
+
+  render();
+})();
+</script>
